@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import logo from './logo.png';
 
 // ============================================
 // JAVIER BOSCO PROPERTIES — v4 FINAL
@@ -268,8 +269,8 @@ function Hero() {
 
         {/* LOGO PNG en vez de texto */}
         <div style={{ marginBottom: 40, ...a(0.6) }}>
-         <img 
-  src="/javierbosco/logo.png" 
+        <img 
+  src={logo} 
   alt="Logo Javier Bosco" 
 />
             alt="Javier Bosco Properties"
