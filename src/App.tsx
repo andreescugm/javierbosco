@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import logo from './logo.png'
 
 // ============================================
 // JAVIER BOSCO PROPERTIES — v4 FINAL
