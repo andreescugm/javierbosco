@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #A08C5B;
+  --color-gold-hover: #BFA36D;
+  --color-obsidian: #050505;
+  --color-deep: #0A0A0A;
+  --color-elevated: #141414;
+  --color-warm-white: #E8E4DD;
+  --color-ash: #6B6560;
+  --color-smoke: #3A3632;
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-lora: 'Lora', Georgia, serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: #050505;
+  color: #E8E4DD;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: rgba(160, 140, 91, 0.2); color: #E8E4DD; }
+
+.input-luxury {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: #E8E4DD;
+  font-size: 13px;
+  font-family: var(--font-inter);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  padding: 18px 20px;
+  width: 100%;
+  transition: border-color 0.5s ease;
+  outline: none;
+  line-height: 1.6;
+  border-radius: 2px;
+}
+.input-luxury::placeholder { color: rgba(232,228,221,0.15); }
+.input-luxury:focus { border-color: rgba(160,140,91,0.35); }
+.input-luxury option { background: #0A0A0A; color: #E8E4DD; }
+
+@keyframes scroll-line {
+  0%   { transform: scaleY(0); transform-origin: top; opacity: 1; }
+  50%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+  51%  { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0.3; }
+}
