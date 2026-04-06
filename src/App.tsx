@@ -269,7 +269,7 @@ function Hero() {
         {/* LOGO PNG en vez de texto */}
         <div style={{ marginBottom: 40, ...a(0.6) }}>
          <img 
-  src={`${import.meta.env.BASE_URL}logo.png`} 
+  src="/javierbosco/logo.png" 
   alt="Logo Javier Bosco" 
 />
             alt="Javier Bosco Properties"
