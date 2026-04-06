@@ -269,7 +269,10 @@ function Hero() {
 
         {/* LOGO PNG en vez de texto */}
         <div style={{ marginBottom: 40, ...a(0.6) }}>
-          <img src={logo} />
+          <img 
+  src={`${import.meta.env.BASE_URL}logo.png`} 
+  alt="Logo Javier Bosco" 
+/>
             alt="Javier Bosco Properties"
             style={{
               maxWidth: "clamp(380px, 56vw, 680px)",
