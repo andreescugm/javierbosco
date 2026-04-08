@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import logo from './logo.png';
+import { Carousel } from "./components/ui/carousel";
 
 // ============================================
-// JAVIER BOSCO PROPERTIES — v4 FINAL
+// JAVIER BOSCO PROPERTIES — v5
 // ============================================
 
 const C = {
@@ -11,13 +12,13 @@ const C = {
   goldDim: "rgba(160,140,91,0.12)",
   goldLine: "rgba(160,140,91,0.25)",
   black: "#030303",
-  blackDeep: "#080808",
+  blackDeep: "#0A0A0A",
   blackBorder: "#1A1A1A",
   blackBorderHover: "#2A2520",
-  white: "#F5F2EB",       // ← más luminoso
-  whiteDim: "#DDD8CE",    // ← más luminoso
-  grey: "#9B958C",        // ← más luminoso
-  greyDark: "#6B6560",    // ← más luminoso
+  white: "#F5F2EB",
+  whiteDim: "#DDD8CE",
+  grey: "#9B958C",
+  greyDark: "#6B6560",
   greySmoke: "#3E3A35",
 };
 
@@ -57,19 +58,19 @@ void main(){
 }`;
 
 function SmokeCanvas({ color = [0.25, 0.22, 0.14], intensity = 1.0 }) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const gl = canvas.getContext("webgl2");
     if (!gl) return;
-    const vs = gl.createShader(gl.VERTEX_SHADER);
+    const vs = gl.createShader(gl.VERTEX_SHADER)!;
     gl.shaderSource(vs, `#version 300 es\nprecision highp float;\nin vec4 position;\nvoid main(){gl_Position=position;}`);
     gl.compileShader(vs);
-    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(fs, FRAG);
     gl.compileShader(fs);
-    const prog = gl.createProgram();
+    const prog = gl.createProgram()!;
     gl.attachShader(prog, vs);
     gl.attachShader(prog, fs);
     gl.linkProgram(prog);
@@ -91,8 +92,8 @@ function SmokeCanvas({ color = [0.25, 0.22, 0.14], intensity = 1.0 }) {
     };
     resize();
     window.addEventListener("resize", resize);
-    let raf;
-    const loop = (now) => {
+    let raf: number;
+    const loop = (now: number) => {
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(prog);
@@ -113,7 +114,7 @@ function SmokeCanvas({ color = [0.25, 0.22, 0.14], intensity = 1.0 }) {
 // UTILITIES
 // ============================================
 function useInView(threshold = 0.2) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -122,10 +123,10 @@ function useInView(threshold = 0.2) {
     obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
-  return [ref, inView];
+  return [ref, inView] as const;
 }
 
-function FadeIn({ children, delay = 0, y = 40 }) {
+function FadeIn({ children, delay = 0, y = 40 }: { children: React.ReactNode; delay?: number; y?: number }) {
   const [ref, inView] = useInView(0.12);
   return (
     <div ref={ref} style={{
@@ -133,27 +134,6 @@ function FadeIn({ children, delay = 0, y = 40 }) {
       transform: inView ? "translateY(0) scale(1)" : `translateY(${y}px) scale(0.98)`,
       transition: `opacity 1s cubic-bezier(0.16,1,0.3,1) ${delay}s, transform 1.2s cubic-bezier(0.16,1,0.3,1) ${delay}s`,
     }}>{children}</div>
-  );
-}
-
-function Counter({ end, prefix = "", suffix = "", active, duration = 2200 }) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!active) { setVal(0); return; }
-    let start = 0;
-    const step = end / (duration / 16);
-    const id = setInterval(() => { start += step; if (start >= end) { setVal(end); clearInterval(id); } else setVal(Math.floor(start)); }, 16);
-    return () => clearInterval(id);
-  }, [active, end, duration]);
-  return <>{prefix}{val}{suffix}</>;
-}
-
-function SectionLabel({ children }) {
-  return (
-    <FadeIn>
-      <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{children}</span>
-      <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: "clamp(60px, 7vw, 100px)" }} />
-    </FadeIn>
   );
 }
 
@@ -169,11 +149,8 @@ function NavHeader() {
     return () => window.removeEventListener("scroll", h);
   }, []);
   const tabs = [
-    { label: "Filosofía", href: "#filosofia" },
     { label: "Portfolio", href: "#portfolio" },
-    { label: "Cifras", href: "#cifras" },
-    { label: "Servicios", href: "#servicios" },
-    { label: "Acceso", href: "#acceso" },
+    { label: "Contacto", href: "#contacto" },
   ];
   return (
     <nav style={{
@@ -203,8 +180,8 @@ function NavHeader() {
   );
 }
 
-function NavTab({ children, href, setCursor }) {
-  const ref = useRef(null);
+function NavTab({ children, href, setCursor }: { children: React.ReactNode; href: string; setCursor: (v: { left: number; width: number; opacity: number }) => void }) {
+  const ref = useRef<HTMLLIElement>(null);
   return (
     <li ref={ref} onMouseEnter={() => {
       if (!ref.current) return;
@@ -223,7 +200,12 @@ function NavTab({ children, href, setCursor }) {
 // ============================================
 // LIQUID GLASS BUTTON
 // ============================================
-function LiquidButton({ children, href = "#", onClick, style: extraStyle = {} }) {
+function LiquidButton({ children, href = "#", onClick, style: extraStyle = {} }: {
+  children: React.ReactNode;
+  href?: string;
+  onClick?: () => void;
+  style?: React.CSSProperties;
+}) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
   const Tag = onClick ? "button" : "a";
@@ -252,28 +234,27 @@ function LiquidButton({ children, href = "#", onClick, style: extraStyle = {} })
 }
 
 // ============================================
-// HERO — con logo PNG
+// HERO
 // ============================================
 function Hero() {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { setTimeout(() => setLoaded(true), 200); }, []);
-  const a = (d) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(35px)", transition: `all 1.4s cubic-bezier(0.16,1,0.3,1) ${d}s` });
+  const a = (d: number): React.CSSProperties => ({
+    opacity: loaded ? 1 : 0,
+    transform: loaded ? "translateY(0)" : "translateY(35px)",
+    transition: `all 1.4s cubic-bezier(0.16,1,0.3,1) ${d}s`,
+  });
   return (
     <section style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
       <SmokeCanvas color={[0.25, 0.22, 0.14]} intensity={1.0} />
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(3,3,3,0.65) 100%)", zIndex: 1 }} />
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 800 }}>
-        <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 40, ...a(0.4) }}>
-          Off-Market Real Estate · Madrid · International
-        </div>
-
-        {/* LOGO PNG en vez de texto */}
-        <div style={{ marginBottom: 40, ...a(0.6) }}>
+        <div style={{ marginBottom: 40, ...a(0.4) }}>
           <img
             src="/javierbosco/logo.png"
             alt="Javier Bosco Properties"
             style={{
-              maxWidth: "clamp(380px, 56vw, 680px)",
+              maxWidth: "clamp(320px, 52vw, 620px)",
               height: "auto",
               margin: "0 auto",
               display: "block",
@@ -284,22 +265,19 @@ function Hero() {
 
         <div style={{ width: loaded ? 64 : 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 40px", transition: "width 2s cubic-bezier(0.16,1,0.3,1) 1.2s" }} />
 
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(19px, 2.4vw, 28px)", color: C.gold, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 32, ...a(1.0) }}>
+        <div style={{ fontFamily: HEADING, fontSize: "clamp(18px, 2.2vw, 26px)", color: C.gold, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 24, ...a(0.8) }}>
           Off-market. On-point.
         </div>
 
-        <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.4vw, 22px)", color: C.grey, letterSpacing: "0.04em", lineHeight: 1.9, maxWidth: 520, margin: "0 auto 28px", fontWeight: 300, ...a(1.3) }}>
-          Conectamos inversores y compradores con propiedades de alto valor
-          que nunca aparecen en portales ni listados públicos.
+        <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, letterSpacing: "0.04em", lineHeight: 1.9, maxWidth: 480, margin: "0 auto 56px", fontWeight: 300, ...a(1.1) }}>
+          Acceso a operaciones inmobiliarias que no están en el mercado.
         </p>
-        <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.greyDark, letterSpacing: "0.04em", lineHeight: 1.9, maxWidth: 480, margin: "0 auto 60px", fontWeight: 300, fontStyle: "italic", ...a(1.5) }}>
-          Edificios completos, residencial de lujo, hoteles, cadenas hoteleras,
-          terrenos estratégicos y activos singulares. Desde 1M€ hasta 200M€.
-        </p>
-        <div style={a(1.7)}>
-          <LiquidButton href="#acceso">Solicitar Acceso Privado</LiquidButton>
+
+        <div style={a(1.4)}>
+          <LiquidButton href="#contacto">Contactar</LiquidButton>
         </div>
       </div>
+
       <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: loaded ? 0.4 : 0, transition: "opacity 1.5s ease 3s" }}>
         <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.35em", color: C.greyDark, textTransform: "uppercase" }}>Scroll</span>
         <div style={{ width: 1, height: 32, background: C.blackBorder, position: "relative", overflow: "hidden" }}>
@@ -311,271 +289,40 @@ function Hero() {
 }
 
 // ============================================
-// FILOSOFÍA — copy más claro
+// PORTFOLIO CAROUSEL
 // ============================================
-function Filosofia() {
-  return (
-    <section id="filosofia" style={{ padding: "clamp(120px, 14vw, 240px) 6vw", background: C.black }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionLabel>Filosofía</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "start" }}>
-          <div>
-            <FadeIn delay={0.15}>
-              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 3.8vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.12, marginBottom: "clamp(36px, 4vw, 56px)" }}>
-                Las mejores<br />oportunidades<br />
-                <span style={{ color: C.gold, fontStyle: "italic" }}>no se publican.<br />Se comparten.</span>
-              </h2>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.3vw, 21px)", color: C.grey, lineHeight: 2, maxWidth: 460, letterSpacing: "0.03em", fontWeight: 300 }}>
-                El mercado off-market funciona con una regla simple: los activos más valiosos
-                — edificios enteros, hoteles, terrenos estratégicos — se mueven entre profesionales
-                que se conocen y confían entre sí, antes de llegar a ningún portal público.
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.45}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 19px)", color: C.greyDark, lineHeight: 2, maxWidth: 460, marginTop: 28, letterSpacing: "0.03em", fontWeight: 300 }}>
-                Javier Bosco Properties actúa como intermediario especializado en este tipo de operaciones:
-                identifica oportunidades, conecta a las partes correctas y gestiona el proceso con discreción absoluta.
-                Foco principal en Madrid, con operaciones activas en toda España, Europa y mercados internacionales.
-              </p>
-            </FadeIn>
-          </div>
-          <div style={{ paddingTop: "clamp(40px, 5vw, 100px)" }}>
-            <FadeIn delay={0.35}>
-              <div style={{ borderLeft: `1px solid ${C.goldLine}`, paddingLeft: "clamp(24px, 3vw, 48px)", marginBottom: "clamp(60px, 6vw, 100px)" }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 20 }}>Lo que dicen los clientes</div>
-                <div style={{ fontFamily: HEADING, fontSize: "clamp(19px, 1.7vw, 26px)", color: C.whiteDim, fontStyle: "italic", lineHeight: 1.6, letterSpacing: "0.02em", fontWeight: 400 }}>
-                  "Accede a operaciones que no están en el mercado."
-                </div>
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.55}>
-              <div style={{ borderLeft: `1px solid ${C.blackBorder}`, paddingLeft: "clamp(24px, 3vw, 48px)", marginBottom: "clamp(60px, 6vw, 80px)" }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 14 }}>Caso real</div>
-                <div style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, lineHeight: 1.9, fontWeight: 300 }}>
-                  Acuerdo cerrado con una petrolera internacional.
-                  Desplazamiento a Bulgaria para firma presencial.
-                  Así de confidencial es el nivel de las operaciones.
-                </div>
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.7}>
-              <div style={{ borderLeft: `1px solid ${C.blackBorder}`, paddingLeft: "clamp(24px, 3vw, 48px)" }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 14 }}>Qué no hacemos</div>
-                <div style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, lineHeight: 1.9, fontWeight: 300 }}>
-                  No trabajamos con residencial estándar, operaciones pequeñas
-                  ni producto sin componente estratégico. Cada operación se selecciona.
-                </div>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
-// PORTFOLIO — más variedad, precios reales, imágenes fix
-// ============================================
-const ASSETS = [
-  { image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop&q=80", title: "Edificio Corporativo Castellana", tag: "Edificio · Madrid · 42M€" },
-  { image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop&q=80", title: "Hotel 5 Estrellas Gran Vía", tag: "Hospitality · Madrid · 85M€" },
-  { image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop&q=80", title: "Chalet en La Moraleja", tag: "Residencial · Madrid · 4.5M€" },
-  { image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=600&h=400&fit=crop&q=80", title: "Palacete Barrio de Salamanca", tag: "Activo Singular · Madrid · 14M€" },
-  { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop&q=80", title: "Cadena Hotelera Mediterráneo", tag: "Portfolio Hospitality · 200M€" },
-  { image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop&q=80", title: "Ático con Vistas en El Viso", tag: "Residencial · Madrid · 7.2M€" },
-  { image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=400&fit=crop&q=80", title: "Hotel Boutique Costa Brava", tag: "Hospitality · Cataluña · 12M€" },
-  { image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=400&fit=crop&q=80", title: "Villa en la Riviera Francesa", tag: "Residencial · Francia · 18M€" },
-  { image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=600&h=400&fit=crop&q=80", title: "Edificio Señorial Centro Madrid", tag: "Edificio · Madrid · 22M€" },
-  { image: "https://images.unsplash.com/photo-1564078516393-cf04bd966897?w=600&h=400&fit=crop&q=80", title: "Finca Histórica en la Toscana", tag: "Activo Singular · Italia · 8.5M€" },
-  { image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop&q=80", title: "Residencia en Puerta de Hierro", tag: "Residencial · Madrid · 5.8M€" },
-  { image: "https://images.unsplash.com/photo-1464938050520-ef2571e0d6e0?w=600&h=400&fit=crop&q=80", title: "Edificio Institucional Chamberí", tag: "Edificio · Madrid · 28M€" },
+const PROPERTIES = [
+  { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=500&fit=crop&q=80", title: "Residencia en El Viso", tag: "Madrid · Residencial" },
+  { image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=500&fit=crop&q=80", title: "Chalet en La Moraleja", tag: "Madrid · Residencial" },
+  { image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=500&fit=crop&q=80", title: "Edificio Corporativo Castellana", tag: "Madrid · Edificio" },
+  { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=500&fit=crop&q=80", title: "Hotel Boutique Costa Brava", tag: "Cataluña · Hospitality" },
+  { image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=500&fit=crop&q=80", title: "Villa en Riviera Francesa", tag: "Francia · Residencial" },
+  { image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=500&fit=crop&q=80", title: "Cadena Hotelera Mediterráneo", tag: "Portfolio · Hospitality" },
 ];
 
 function Portfolio() {
-  const scrollRef = useRef(null);
-  const [hoveredIdx, setHoveredIdx] = useState(null);
-  const [speed, setSpeed] = useState(1);
-  const speedRef = useRef(1);
-
-  useEffect(() => { speedRef.current = speed; }, [speed]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let pos = 0;
-    let raf;
-    let paused = false;
-    const step = () => {
-      if (!paused) {
-        pos += 0.4 * speedRef.current;
-        if (pos >= el.scrollWidth / 2) pos = 0;
-        el.scrollLeft = pos;
-      }
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    const pause = () => { paused = true; };
-    const resume = () => { paused = false; pos = el.scrollLeft; };
-    el.addEventListener("mouseenter", pause);
-    el.addEventListener("mouseleave", resume);
-    return () => { cancelAnimationFrame(raf); el.removeEventListener("mouseenter", pause); el.removeEventListener("mouseleave", resume); };
-  }, []);
-
-  const doubled = [...ASSETS, ...ASSETS];
-
   return (
-    <section id="portfolio" style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.blackDeep, position: "relative" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-      <div style={{ maxWidth: 1200, margin: "0 auto 0", padding: "0 6vw" }}>
-        <SectionLabel>Portfolio Orientativo</SectionLabel>
-      </div>
-      <FadeIn>
-        <div ref={scrollRef} style={{ display: "flex", gap: 20, overflow: "hidden", paddingBottom: 8, cursor: "grab", width: "100%" }}>
-          {doubled.map((asset, i) => (
-            <div key={i}
-              onMouseEnter={() => setHoveredIdx(i)}
-              onMouseLeave={() => setHoveredIdx(null)}
-              style={{
-                flexShrink: 0, width: 320, position: "relative",
-                borderRadius: 4, overflow: "hidden",
-                opacity: hoveredIdx !== null && hoveredIdx !== i ? 0.5 : 1,
-                transform: hoveredIdx === i ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)",
-              }}>
-              <div style={{ width: "100%", height: 220, overflow: "hidden", background: C.blackBorder }}>
-                <img src={asset.image} alt={asset.title}
-                  loading="lazy"
-                  crossOrigin="anonymous"
-                  style={{
-                    width: "100%", height: "100%", objectFit: "cover", display: "block",
-                    filter: hoveredIdx === i ? "grayscale(0) brightness(0.9)" : "grayscale(0.7) brightness(0.55)",
-                    transition: "filter 0.6s",
-                  }}
-                  onError={(e) => { e.target.style.display = "none"; }}
-                />
-              </div>
-              <div style={{
-                position: "absolute", bottom: 0, left: 0, right: 0,
-                padding: "48px 20px 20px",
-                background: "linear-gradient(to top, rgba(3,3,3,0.95) 0%, transparent 100%)",
-              }}>
-                <div style={{ fontFamily: HEADING, fontSize: 17, color: C.white, letterSpacing: "0.02em", marginBottom: 6 }}>
-                  {asset.title}
-                </div>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>
-                  {asset.tag}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </FadeIn>
-      <FadeIn delay={0.3}>
-        <div style={{ textAlign: "center", marginTop: 40, padding: "0 6vw", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-          <p style={{ fontFamily: UI, fontSize: 10, color: C.greyDark, letterSpacing: "0.15em", fontStyle: "italic" }}>
-            Por discreción, las imágenes son orientativas. Los activos reales se presentan bajo acuerdo de confidencialidad.
-          </p>
-          <button
-            onClick={() => setSpeed(s => s === 1 ? 3 : s === 3 ? 6 : 1)}
-            style={{
-              fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase",
-              color: C.greyDark, background: "transparent",
-              border: `1px solid ${C.blackBorder}`, borderRadius: 100,
-              padding: "8px 20px", cursor: "pointer",
-              transition: "all 0.4s",
-            }}
-            onMouseEnter={(e) => { e.target.style.borderColor = C.goldLine; e.target.style.color = C.gold; }}
-            onMouseLeave={(e) => { e.target.style.borderColor = C.blackBorder; e.target.style.color = C.greyDark; }}
-          >
-            {speed === 1 ? "×1" : speed === 3 ? "×3" : "×6"}
-          </button>
-        </div>
-      </FadeIn>
-    </section>
-  );
-}
-
-// ============================================
-// CIFRAS — rango 1-200M€, copy mejorado
-// ============================================
-function Cifras() {
-  const [ref, inView] = useInView(0.25);
-  const stats = [
-    { value: 300, prefix: "+", label: "Operaciones\nCerradas" },
-    { value: 5, prefix: "+", label: "Años en\nOff-Market" },
-    { value: 200, suffix: "M€", label: "Mayor\nOperación" },
-    { value: 1, suffix: "–200M€", label: "Rango de\nActivos" },
-  ];
-  return (
-    <section id="cifras" ref={ref} style={{ padding: "clamp(120px, 14vw, 240px) 6vw", background: C.black, position: "relative" }}>
+    <section id="portfolio" style={{ padding: "clamp(120px, 14vw, 200px) 6vw", background: C.blackDeep, position: "relative" }}>
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <FadeIn>
-          <div style={{ textAlign: "center", marginBottom: "clamp(80px, 8vw, 140px)" }}>
-            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>Cifras</span>
-            <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 0" }} />
-          </div>
+          <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>Portfolio</span>
+          <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: "clamp(60px, 7vw, 100px)" }} />
         </FadeIn>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", border: `1px solid ${C.blackBorder}` }}>
-          {stats.map((s, i) => (
-            <FadeIn key={i} delay={0.1 + i * 0.12}>
-              <div style={{ padding: "clamp(40px, 5vw, 72px) clamp(20px, 3vw, 48px)", textAlign: "center", borderRight: i < 3 ? `1px solid ${C.blackBorder}` : "none" }}>
-                <div style={{ fontFamily: HEADING, fontSize: "clamp(36px, 4.5vw, 72px)", fontWeight: 400, color: C.gold, lineHeight: 1, marginBottom: 20 }}>
-                  <Counter end={s.value} prefix={s.prefix || ""} suffix={s.suffix || ""} active={inView} />
-                </div>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.25em", color: C.grey, textTransform: "uppercase", lineHeight: 2, whiteSpace: "pre-line" }}>{s.label}</div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-        <FadeIn delay={0.7}>
-          <div style={{ textAlign: "center", marginTop: "clamp(60px, 6vw, 100px)", maxWidth: 600, margin: "clamp(60px, 6vw, 100px) auto 0" }}>
-            <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 300 }}>
-              Cada rango de inversión recibe una estrategia distinta: diferente tipo de activo,
-              diferente perfil de comprador, diferente nivel de confidencialidad.
-              No es lo mismo gestionar 2M€ que 120M€ — y así lo tratamos.
-            </p>
-          </div>
+        <FadeIn delay={0.1}>
+          <Carousel items={PROPERTIES} />
         </FadeIn>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
-// SERVICIOS
-// ============================================
-function ServiceRow({ num, title, desc, isLast }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
-      display: "grid", gridTemplateColumns: "60px 1fr 1.2fr", gap: "clamp(24px, 4vw, 64px)", alignItems: "baseline",
-      padding: "clamp(32px, 4vw, 56px) 0", borderTop: `1px solid ${hover ? C.blackBorderHover : C.blackBorder}`,
-      borderBottom: isLast ? `1px solid ${C.blackBorder}` : "none", cursor: "default",
-      transition: "all 0.6s cubic-bezier(0.25,0.1,0.25,1)", paddingLeft: hover ? 16 : 0,
-    }}>
-      <span style={{ fontFamily: HEADING, fontSize: 13, color: hover ? C.gold : C.greyDark, letterSpacing: "0.1em", transition: "color 0.5s" }}>{num}</span>
-      <h3 style={{ fontFamily: HEADING, fontSize: "clamp(22px, 2.2vw, 32px)", fontWeight: 400, color: hover ? C.gold : C.white, letterSpacing: "0.02em", margin: 0, transition: "color 0.5s" }}>{title}</h3>
-      <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, lineHeight: 1.9, margin: 0, letterSpacing: "0.03em", fontWeight: 300 }}>{desc}</p>
-    </div>
-  );
-}
-
-function Servicios() {
-  const services = [
-    { num: "01", title: "Compra Off-Market", desc: "Acceso anticipado a edificios, solares, hoteles y activos singulares que no están públicamente disponibles. Operaciones desde 1M€ hasta 200M€, antes de que lleguen al mercado abierto." },
-    { num: "02", title: "Venta Discrecional", desc: "Tu activo se presenta exclusivamente a compradores verificados e inversores cualificados. Sin aparecer en portales, sin exposición pública, sin dejar huella digital." },
-    { num: "03", title: "Advisory Estratégico", desc: "Análisis de oportunidad, due diligence y estructuración de operaciones complejas. El criterio profesional que convierte información privilegiada en ventaja competitiva." },
-    { num: "04", title: "Activos Singulares", desc: "Operaciones que no encajan en categorías convencionales: palacios urbanos, fincas históricas, portfolios hoteleros de 9 cifras. Sin límite geográfico." },
-  ];
-  return (
-    <section id="servicios" style={{ padding: "clamp(120px, 14vw, 240px) 6vw", background: C.blackDeep }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionLabel>Servicios</SectionLabel>
-        {services.map((s, i) => <FadeIn key={i} delay={0.1 * i}><ServiceRow {...s} isLast={i === services.length - 1} /></FadeIn>)}
+        <FadeIn delay={0.3}>
+          <p style={{
+            fontFamily: UI, fontSize: 10, color: C.greyDark, letterSpacing: "0.12em",
+            lineHeight: 1.9, textAlign: "center", marginTop: "clamp(60px, 6vw, 100px)",
+            maxWidth: 560, margin: "clamp(60px, 6vw, 100px) auto 0",
+            fontStyle: "italic",
+          }}>
+            Estas son las operaciones que podemos mostrar.<br />
+            Las que no, requieren una conversación.
+          </p>
+        </FadeIn>
       </div>
     </section>
   );
@@ -584,7 +331,7 @@ function Servicios() {
 // ============================================
 // INVESTMENT SLIDER
 // ============================================
-function InvestmentSlider({ value, onChange }) {
+function InvestmentSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const ticks = [
     { val: 0, label: "<1M€" },
     { val: 1, label: "1-5M€" },
@@ -618,13 +365,13 @@ function InvestmentSlider({ value, onChange }) {
 }
 
 // ============================================
-// ACCESO — con smoke, campos completos
+// CONTACTO
 // ============================================
-function Acceso() {
-  const [focused, setFocused] = useState(null);
+function Contacto() {
+  const [focused, setFocused] = useState<string | null>(null);
   const [sliderVal, setSliderVal] = useState(3);
 
-  const inputStyle = (field) => ({
+  const inputStyle = (field: string): React.CSSProperties => ({
     background: "transparent", border: "none",
     borderBottom: `1px solid ${focused === field ? C.gold : C.blackBorder}`,
     color: C.white, fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)",
@@ -632,8 +379,8 @@ function Acceso() {
     letterSpacing: "0.04em", transition: "border-color 0.5s", fontWeight: 300,
   });
 
-  const selectStyle = {
-    background: "transparent", border: "none",
+  const selectStyle: React.CSSProperties = {
+    background: C.blackDeep, border: "none",
     borderBottom: `1px solid ${focused === "tipo" ? C.gold : C.blackBorder}`,
     color: C.white, fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)",
     padding: "18px 0", outline: "none", width: "100%",
@@ -642,113 +389,83 @@ function Acceso() {
   };
 
   return (
-    <section id="acceso" style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
-      <SmokeCanvas color={[0.2, 0.18, 0.12]} intensity={0.5} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 90% 70% at 50% 50%, transparent 0%, rgba(3,3,3,0.8) 100%)", zIndex: 1 }} />
+    <section id="contacto" style={{ padding: "clamp(120px, 14vw, 200px) 6vw", background: C.blackDeep, position: "relative" }}>
+      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <FadeIn>
+          <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>Contacto</span>
+          <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: "clamp(60px, 7vw, 100px)" }} />
+        </FadeIn>
 
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "clamp(120px, 14vw, 240px) 6vw" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 10vw, 180px)", alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 10vw, 160px)", alignItems: "start" }}>
+          {/* Left: form */}
           <div>
-            <SectionLabel>Acceso Privado</SectionLabel>
-            <FadeIn delay={0.15}>
-              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(38px, 4vw, 60px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: "clamp(28px, 3vw, 44px)" }}>
-                El primer paso<br />es una<br /><span style={{ color: C.gold, fontStyle: "italic" }}>conversación.</span>
-              </h2>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.3vw, 21px)", color: C.grey, lineHeight: 2, maxWidth: 440, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 24 }}>
-                Si eres inversor, family office, desarrollador o profesional del sector
-                y buscas acceso a oportunidades inmobiliarias off-market de alto valor
-                — este formulario es tu punto de entrada.
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.4}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.1vw, 18px)", color: C.greyDark, lineHeight: 2, maxWidth: 440, letterSpacing: "0.03em", fontWeight: 300, fontStyle: "italic" }}>
-                Cada solicitud se revisa personalmente.
-                Si tu perfil encaja con alguna operación en curso, el contacto es directo.
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.55}>
-              <div style={{ marginTop: "clamp(60px, 6vw, 100px)" }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 14 }}>Línea directa</div>
-                <a href="mailto:javierbosco@javierbosco.com" style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, textDecoration: "none", letterSpacing: "0.06em", transition: "color 0.5s", fontWeight: 300, display: "block", marginBottom: 8 }}
-                  onMouseEnter={(e) => e.target.style.color = C.gold} onMouseLeave={(e) => e.target.style.color = C.grey}>
-                  javierbosco@javierbosco.com
-                </a>
-              </div>
-            </FadeIn>
-          </div>
-
-          {/* FORM */}
-          <div style={{ paddingTop: "clamp(20px, 4vw, 72px)" }}>
-            <FadeIn delay={0.2}>
+            <FadeIn delay={0.1}>
               <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Nombre completo</label>
+                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Nombre</label>
                 <input style={inputStyle("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.25}>
+            <FadeIn delay={0.15}>
               <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
                 <input type="email" style={inputStyle("email")} placeholder="tu@email.com" onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.3}>
+            <FadeIn delay={0.2}>
               <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Teléfono (con prefijo internacional si no es español)</label>
+                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Teléfono</label>
                 <div style={{ display: "flex", gap: 12 }}>
-                  <input style={{ ...inputStyle("prefix"), width: 80, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
+                  <input style={{ ...inputStyle("prefix"), width: 72, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
                   <input type="tel" style={inputStyle("phone")} placeholder="600 000 000" onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
                 </div>
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.35}>
+            <FadeIn delay={0.25}>
               <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tipo de operación</label>
-                <select style={{ ...selectStyle, borderBottomColor: focused === "tipo" ? C.gold : C.blackBorder }} onFocus={() => setFocused("tipo")} onBlur={() => setFocused(null)}>
-                  <option value="" style={{ background: C.black }}>Seleccionar...</option>
-                  <option value="compra" style={{ background: C.black }}>Compra</option>
-                  <option value="venta" style={{ background: C.black }}>Venta</option>
-                  <option value="advisory" style={{ background: C.black }}>Advisory</option>
-                  <option value="coinversion" style={{ background: C.black }}>Co-inversión</option>
+                <select
+                  style={{ ...selectStyle, borderBottomColor: focused === "tipo" ? C.gold : C.blackBorder }}
+                  onFocus={() => setFocused("tipo")} onBlur={() => setFocused(null)}
+                >
+                  <option value="" style={{ background: C.blackDeep }}>Seleccionar...</option>
+                  <option value="compra" style={{ background: C.blackDeep }}>Compra</option>
+                  <option value="venta" style={{ background: C.blackDeep }}>Venta</option>
+                  <option value="advisory" style={{ background: C.blackDeep }}>Advisory</option>
+                  <option value="coinversion" style={{ background: C.blackDeep }}>Co-inversión</option>
                 </select>
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.4}>
-              <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tipo de activo</label>
-                <select style={{ ...selectStyle, borderBottomColor: focused === "activo" ? C.gold : C.blackBorder }} onFocus={() => setFocused("activo")} onBlur={() => setFocused(null)}>
-                  <option value="" style={{ background: C.black }}>Seleccionar...</option>
-                  <option value="edificio" style={{ background: C.black }}>Edificio</option>
-                  <option value="singular" style={{ background: C.black }}>Activo singular</option>
-                  <option value="residencial" style={{ background: C.black }}>Residencial de lujo</option>
-                  <option value="hotel" style={{ background: C.black }}>Hotel / Cadena hotelera</option>
-                  <option value="terreno" style={{ background: C.black }}>Terreno</option>
-                </select>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.45}>
-              <div style={{ marginBottom: "clamp(28px, 3vw, 40px)" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Ubicación de interés</label>
-                <input style={{ ...inputStyle("ubicacion"), fontStyle: "italic" }} placeholder="Madrid, España, Europa, Internacional..."
-                  onFocus={() => setFocused("ubicacion")} onBlur={() => setFocused(null)} />
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.5}>
+            <FadeIn delay={0.3}>
               <div style={{ marginBottom: "clamp(40px, 4.5vw, 56px)" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 20 }}>Capital aproximado</label>
+                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 20 }}>Rango de inversión</label>
                 <InvestmentSlider value={sliderVal} onChange={setSliderVal} />
               </div>
             </FadeIn>
 
-            <FadeIn delay={0.6}>
-              <LiquidButton href="#acceso">Solicitar Acceso</LiquidButton>
+            <FadeIn delay={0.4}>
+              <LiquidButton href="#contacto">Enviar</LiquidButton>
+            </FadeIn>
+          </div>
+
+          {/* Right: contact info */}
+          <div style={{ paddingTop: "clamp(0px, 4vw, 60px)" }}>
+            <FadeIn delay={0.2}>
+              <div style={{ borderLeft: `1px solid ${C.blackBorder}`, paddingLeft: "clamp(32px, 4vw, 56px)" }}>
+                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 20 }}>Contacto directo</div>
+                <a
+                  href="mailto:javierbosco@javierbosco.com"
+                  style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, textDecoration: "none", letterSpacing: "0.04em", transition: "color 0.5s", fontWeight: 300, display: "block" }}
+                  onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = C.gold}
+                  onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = C.grey}
+                >
+                  javierbosco@javierbosco.com
+                </a>
+              </div>
             </FadeIn>
           </div>
         </div>
@@ -762,15 +479,32 @@ function Acceso() {
 // ============================================
 function Footer() {
   return (
-    <footer style={{ padding: "40px 6vw", background: C.black, borderTop: `1px solid ${C.blackBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>© 2026 Javier Bosco Properties</span>
-      <span style={{ fontFamily: HEADING, fontSize: 13, color: C.greyDark, fontStyle: "italic", letterSpacing: "0.06em" }}>Off-market. On-point.</span>
-      <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-        <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer" style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.15em", color: C.greyDark, textDecoration: "none", textTransform: "uppercase", transition: "color 0.4s" }}
-          onMouseEnter={(e) => e.target.style.color = C.gold} onMouseLeave={(e) => e.target.style.color = C.greyDark}>
-          Instagram
-        </a>
-        <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>Madrid</span>
+    <footer style={{ padding: "clamp(48px, 6vw, 80px) 6vw", background: C.black, borderTop: `1px solid ${C.blackBorder}` }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 32 }}>
+        <div>
+          <div style={{ fontFamily: HEADING, fontSize: 13, letterSpacing: "0.22em", color: C.white, marginBottom: 12, fontWeight: 400 }}>
+            JAVIER BOSCO PROPERTIES
+          </div>
+          <a href="mailto:javierbosco@javierbosco.com" style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.15em", color: C.greyDark, textDecoration: "none", textTransform: "uppercase", transition: "color 0.4s", display: "block" }}
+            onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = C.gold}
+            onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = C.greyDark}>
+            javierbosco@javierbosco.com
+          </a>
+        </div>
+
+        <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greySmoke, textTransform: "uppercase", textAlign: "center" }}>
+          © 2026
+        </span>
+
+        <div style={{ display: "flex", gap: 28, alignItems: "center", justifyContent: "flex-end" }}>
+          <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer"
+            style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.15em", color: C.greyDark, textDecoration: "none", textTransform: "uppercase", transition: "color 0.4s" }}
+            onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = C.gold}
+            onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = C.greyDark}>
+            Instagram
+          </a>
+          <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>Madrid</span>
+        </div>
       </div>
     </footer>
   );
@@ -803,20 +537,16 @@ export default function JavierBoscoLanding() {
         }
         @media (max-width: 900px) { nav > ul { display: none !important; } }
         @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1.2fr"] { grid-template-columns: 1fr !important; }
           div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-          div[style*="grid-template-columns: repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
-          div[style*="grid-template-columns: 60px"] { grid-template-columns: 1fr !important; gap: 12px !important; }
+          div[style*="grid-template-columns: 1fr auto 1fr"] { grid-template-columns: 1fr !important; gap: 16px !important; }
+          div[style*="grid-template-columns: 1fr 2fr 1fr"] { grid-template-columns: 1fr !important; }
           footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
         }
       `}</style>
       <NavHeader />
       <Hero />
-      <Filosofia />
       <Portfolio />
-      <Cifras />
-      <Servicios />
-      <Acceso />
+      <Contacto />
       <Footer />
     </div>
   );
