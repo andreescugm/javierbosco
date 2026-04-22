@@ -942,9 +942,10 @@ function Vender() {
   const t = useT();
   const [address, setAddress] = useState("");
   return (
-    <section id="vender" style={{ position: "relative", background: "#F8F7F4", minHeight: "80vh", display: "flex", alignItems: "center" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-      <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}>
+    <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
+      <SmokeCanvas color={[0.60, 0.57, 0.50]} base={[0.96, 0.94, 0.90]} intensity={0.25} />
+      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder, zIndex: 1 }} />
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}>
         <FadeIn>
           <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_vender}</span>
           <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
