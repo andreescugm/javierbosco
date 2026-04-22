@@ -1,19 +1,18 @@
-import { useState, useEffect, useRef, Children, ReactNode, createContext, useContext } from "react";
-import { motion, useMotionValue, AnimatePresence } from "framer-motion";
-import type { Transition } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, MapPin, Home, Sun, Moon } from "lucide-react";
+import { useState, useEffect, useRef, ReactNode, createContext, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, Search, MapPin, Home } from "lucide-react";
 
 const C = {
   gold: "#A08C5B",
   goldHover: "#BFA36D",
   goldDim: "rgba(160,140,91,0.12)",
   goldLine: "rgba(160,140,91,0.25)",
-  black: "var(--c-bg)",
-  blackDeep: "var(--c-bg-deep)",
-  blackBorder: "var(--c-bg-border)",
-  blackBorderHover: "var(--c-bg-border-hover)",
-  white: "var(--c-fg)",
-  whiteDim: "var(--c-fg-dim)",
+  black: "#F5F2EB",
+  blackDeep: "#EAE7E0",
+  blackBorder: "#D5D0C8",
+  blackBorderHover: "#C5BFB7",
+  white: "#030303",
+  whiteDim: "#2A2522",
   grey: "#9B958C",
   greyDark: "#6B6560",
   greySmoke: "#3E3A35",
@@ -369,98 +368,43 @@ function SmokeCanvas({
 }
 
 // ============================================
-// CAROUSEL
+// SIMPLE CAROUSEL — 1 item at a time, infinite loop
 // ============================================
-type CarouselContextType = {
-  index: number; setIndex: (i: number) => void;
-  itemsCount: number; setItemsCount: (c: number) => void;
-  disableDrag: boolean;
-};
-const CarouselContext = createContext<CarouselContextType | undefined>(undefined);
-function useCarousel() {
-  const ctx = useContext(CarouselContext);
-  if (!ctx) throw new Error("useCarousel must be used within CarouselProvider");
-  return ctx;
-}
-function CarouselProvider({ children, initialIndex = 0, onIndexChange, disableDrag = false }: {
-  children: ReactNode; initialIndex?: number; onIndexChange?: (i: number) => void; disableDrag?: boolean;
-}) {
-  const [index, setIndex] = useState(initialIndex);
-  const [itemsCount, setItemsCount] = useState(0);
-  const handleSetIndex = (i: number) => { setIndex(i); onIndexChange?.(i); };
-  useEffect(() => { setIndex(initialIndex); }, [initialIndex]);
-  return (
-    <CarouselContext.Provider value={{ index, setIndex: handleSetIndex, itemsCount, setItemsCount, disableDrag }}>
-      {children}
-    </CarouselContext.Provider>
-  );
-}
-function Carousel({ children, className, initialIndex = 0, onIndexChange, disableDrag = false }: {
-  children: ReactNode; className?: string; initialIndex?: number; onIndexChange?: (i: number) => void; disableDrag?: boolean;
-}) {
-  return (
-    <CarouselProvider initialIndex={initialIndex} onIndexChange={onIndexChange} disableDrag={disableDrag}>
-      <div className={cn("group/hover relative", className)}>
-        <div className="overflow-hidden">{children}</div>
-      </div>
-    </CarouselProvider>
-  );
-}
-function CarouselContent({ children, transition }: { children: ReactNode; transition?: Transition }) {
-  const { index, setIndex, setItemsCount, disableDrag } = useCarousel();
-  const [visibleItemsCount, setVisibleItemsCount] = useState(1);
-  const dragX = useMotionValue(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const itemsLength = Children.count(children);
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const obs = new IntersectionObserver((entries) => {
-      const visible = entries.filter(e => e.isIntersecting).length;
-      setVisibleItemsCount(visible);
-    }, { root: containerRef.current, threshold: 0.5 });
-    const nodes = containerRef.current.children;
-    Array.from(nodes).forEach(c => obs.observe(c));
-    return () => obs.disconnect();
-  }, [children]);
-  useEffect(() => { if (itemsLength) setItemsCount(itemsLength); }, [itemsLength, setItemsCount]);
-  const onDragEnd = () => {
-    const x = dragX.get();
-    if (x <= -10) setIndex((index + 1) % itemsLength);
-    else if (x >= 10) setIndex((index - 1 + itemsLength) % itemsLength);
+function SimpleCarousel({ items, renderItem }: { items: any[]; renderItem: (item: any) => ReactNode }) {
+  const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState(1);
+  const n = items.length;
+  const go = (d: number) => { setDir(d); setIdx(i => (i + d + n) % n); };
+  const btnStyle = {
+    background: "rgba(10,8,5,0.55)", border: `1px solid ${C.goldLine}`,
+    borderRadius: "50%", padding: 12, cursor: "pointer", display: "flex",
   };
   return (
-    <motion.div
-      drag={disableDrag ? false : "x"}
-      dragConstraints={disableDrag ? undefined : { left: 0, right: 0 }}
-      dragMomentum={disableDrag ? undefined : false}
-      style={{ x: disableDrag ? undefined : dragX }}
-      animate={{ translateX: `-${index * (100 / visibleItemsCount)}%` }}
-      onDragEnd={disableDrag ? undefined : onDragEnd}
-      transition={transition || { damping: 18, stiffness: 90, type: "spring", duration: 0.2 }}
-      className={cn("flex items-center", !disableDrag && "cursor-grab active:cursor-grabbing")}
-      ref={containerRef}
-    >{children}</motion.div>
-  );
-}
-function CarouselItem({ children, className }: { children: ReactNode; className?: string }) {
-  return <motion.div className={cn("w-full min-w-0 shrink-0 grow-0 overflow-hidden", className)}>{children}</motion.div>;
-}
-function CarouselNavigation({ alwaysShow }: { alwaysShow?: boolean }) {
-  const { index, setIndex, itemsCount } = useCarousel();
-  return (
-    <div className="pointer-events-none absolute left-0 top-1/2 flex w-full -translate-y-1/2 justify-between px-4">
-      <button type="button" aria-label="Previous"
-        onClick={() => setIndex((index - 1 + itemsCount) % itemsCount)}
-        style={{ pointerEvents: "auto", background: "rgba(10,8,5,0.65)", border: `1px solid ${C.goldLine}`, borderRadius: "50%", padding: 12, opacity: alwaysShow ? 1 : 0, transition: "all 0.4s", cursor: "pointer" }}
-        className="group-hover/hover:opacity-100">
-        <ChevronLeft size={18} style={{ color: C.gold }} />
-      </button>
-      <button type="button" aria-label="Next"
-        onClick={() => setIndex((index + 1) % itemsCount)}
-        style={{ pointerEvents: "auto", background: "rgba(10,8,5,0.65)", border: `1px solid ${C.goldLine}`, borderRadius: "50%", padding: 12, opacity: alwaysShow ? 1 : 0, transition: "all 0.4s", cursor: "pointer" }}
-        className="group-hover/hover:opacity-100">
-        <ChevronRight size={18} style={{ color: C.gold }} />
-      </button>
+    <div style={{ position: "relative" }}>
+      <div style={{ overflow: "hidden" }}>
+        <AnimatePresence mode="wait" custom={dir}>
+          <motion.div key={idx}
+            custom={dir}
+            initial={(d: number) => ({ x: d * 60, opacity: 0 })}
+            animate={{ x: 0, opacity: 1 }}
+            exit={(d: number) => ({ x: -d * 60, opacity: 0 })}
+            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            {renderItem(items[idx])}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", justifyContent: "space-between", padding: "0 16px", pointerEvents: "none" }}>
+        <button type="button" aria-label="Previous" onClick={() => go(-1)} style={{ ...btnStyle, pointerEvents: "auto" }}>
+          <ChevronLeft size={18} style={{ color: C.gold }} />
+        </button>
+        <button type="button" aria-label="Next" onClick={() => go(1)} style={{ ...btnStyle, pointerEvents: "auto" }}>
+          <ChevronRight size={18} style={{ color: C.gold }} />
+        </button>
+      </div>
+      <div style={{ textAlign: "center", marginTop: 24, fontFamily: "'Inter','Helvetica Neue',sans-serif", fontSize: 9, letterSpacing: "0.25em", color: C.greyDark }}>
+        {idx + 1} / {n}
+      </div>
     </div>
   );
 }
@@ -503,9 +447,7 @@ const LANG_OPTIONS = [
 // ============================================
 // NAV HEADER
 // ============================================
-function NavHeader({ isDark, onToggle, lang, setLang }: {
-  isDark: boolean; onToggle: () => void; lang: string; setLang: (l: string) => void;
-}) {
+function NavHeader({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
   const t = useT();
   const [cursor, setCursor] = useState({ left: 0, width: 0, opacity: 0 });
   const [scrolled, setScrolled] = useState(false);
@@ -525,7 +467,7 @@ function NavHeader({ isDark, onToggle, lang, setLang }: {
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: scrolled ? "14px 4vw" : "24px 4vw",
-      background: scrolled ? "var(--c-nav-bg)" : "transparent",
+      background: scrolled ? "rgba(245,242,235,0.94)" : "transparent",
       backdropFilter: scrolled ? "blur(24px) saturate(1.2)" : "none",
       borderBottom: scrolled ? `1px solid ${C.blackBorder}` : "1px solid transparent",
       transition: "all 0.7s cubic-bezier(0.25,0.1,0.25,1)",
@@ -535,7 +477,7 @@ function NavHeader({ isDark, onToggle, lang, setLang }: {
       </a>
       <ul style={{
         position: "relative", display: "flex", listStyle: "none", margin: 0, padding: "4px",
-        borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "var(--c-nav-pill)",
+        borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "rgba(200,195,185,0.3)",
       }} onMouseLeave={() => setCursor(p => ({ ...p, opacity: 0 }))}>
         {tabs.map(t => <NavTab key={t.href} href={t.href} setCursor={setCursor}>{t.label}</NavTab>)}
         <li style={{
@@ -545,18 +487,11 @@ function NavHeader({ isDark, onToggle, lang, setLang }: {
         }} />
       </ul>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <a href="tel:+34600000000" style={{
-          fontFamily: UI, fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
-          color: C.grey, textDecoration: "none", transition: "color 0.4s",
-        }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}
-        >{t.nav_call}</a>
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value)}
           style={{
-            background: "var(--c-bg)", border: `1px solid ${C.blackBorder}`,
+            background: "#F5F2EB", border: `1px solid ${C.blackBorder}`,
             color: C.grey, fontFamily: UI, fontSize: 13, letterSpacing: "0.05em",
             padding: "3px 6px", cursor: "pointer", borderRadius: 2, outline: "none",
             transition: "border-color 0.4s",
@@ -564,21 +499,8 @@ function NavHeader({ isDark, onToggle, lang, setLang }: {
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.gold)}
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.blackBorder)}
         >
-          {LANG_OPTIONS.map(l => <option key={l.code} value={l.code} style={{ background: isDark ? "#030303" : "#F5F2EB" }}>{l.flag}</option>)}
+          {LANG_OPTIONS.map(l => <option key={l.code} value={l.code} style={{ background: "#F5F2EB" }}>{l.flag}</option>)}
         </select>
-        <button onClick={onToggle}
-          style={{
-            background: "transparent", border: `1px solid ${C.blackBorder}`,
-            borderRadius: "50%", padding: 6, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: C.grey, transition: "all 0.4s",
-          }}
-          aria-label="Toggle theme"
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.gold; (e.currentTarget as HTMLButtonElement).style.color = C.gold; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.blackBorder; (e.currentTarget as HTMLButtonElement).style.color = C.grey; }}
-        >
-          {isDark ? <Sun size={14} /> : <Moon size={14} />}
-        </button>
       </div>
     </nav>
   );
@@ -705,7 +627,7 @@ function SearchPalette({ open, setOpen, sliderVal, setSliderVal }: { open: boole
       {!open ? (
         <button onClick={() => setOpen(true)} style={{
           width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "20px 28px",
-          background: "var(--c-search-pill)", backdropFilter: "blur(20px)",
+          background: "rgba(245,242,235,0.75)", backdropFilter: "blur(20px)",
           border: `1px solid ${C.goldLine}`, borderRadius: 100,
           cursor: "pointer", transition: "all 0.5s", color: C.grey,
           fontFamily: BODY, fontSize: 17, letterSpacing: "0.03em", fontStyle: "italic",
@@ -731,7 +653,7 @@ function SearchExpanded({ close, sliderVal, setSliderVal }: { close: () => void;
   return (
     <motion.div initial={{ opacity: 0, y: -10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      style={{ background: "var(--c-search-expanded)", backdropFilter: "blur(24px)", border: `1px solid ${C.goldLine}`, borderRadius: 24, padding: "32px 28px", textAlign: "left" }}>
+      style={{ background: "rgba(240,237,230,0.96)", backdropFilter: "blur(24px)", border: `1px solid ${C.goldLine}`, borderRadius: 24, padding: "32px 28px", textAlign: "left" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 28, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 16 }}>
         {(["comprar", "vender"] as const).map(tb => (
           <button key={tb} onClick={() => setTab(tb)} style={{
@@ -841,16 +763,7 @@ function PropiedadesDestacadas() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <Carousel className="w-full">
-            <CarouselContent>
-              {PROPERTIES.map((p, i) => (
-                <CarouselItem key={i} className="md:basis-1/2 lg:basis-1/3 px-3">
-                  <PropertyCard property={p} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselNavigation alwaysShow />
-          </Carousel>
+          <SimpleCarousel items={PROPERTIES} renderItem={(p) => <PropertyCard property={p} />} />
         </FadeIn>
         <FadeIn delay={0.4}>
           <p style={{ textAlign: "center", marginTop: 60, fontFamily: BODY, fontSize: 15, color: C.greyDark, letterSpacing: "0.04em", fontStyle: "italic", fontWeight: 300 }}>
@@ -915,16 +828,7 @@ function Destinos() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <Carousel>
-            <CarouselContent>
-              {DESTINATIONS.map((d, i) => (
-                <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4 px-2">
-                  <DestinationCard destination={d} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselNavigation alwaysShow />
-          </Carousel>
+          <SimpleCarousel items={DESTINATIONS} renderItem={(d) => <DestinationCard destination={d} />} />
         </FadeIn>
       </div>
     </section>
@@ -970,16 +874,7 @@ function TiposActivo() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <Carousel>
-            <CarouselContent>
-              {ASSET_TYPES.map((a, i) => (
-                <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4 px-2">
-                  <AssetTypeCard asset={a} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselNavigation alwaysShow />
-          </Carousel>
+          <SimpleCarousel items={ASSET_TYPES} renderItem={(a) => <AssetTypeCard asset={a} />} />
         </FadeIn>
       </div>
     </section>
@@ -1028,7 +923,7 @@ function Vender() {
         </FadeIn>
         <FadeIn delay={0.45}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, maxWidth: 640, margin: "0 auto 32px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "var(--c-search-pill)", backdropFilter: "blur(20px)", border: `1px solid ${C.goldLine}`, borderRadius: 100 }}>
+            <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "rgba(245,242,235,0.75)", backdropFilter: "blur(20px)", border: `1px solid ${C.goldLine}`, borderRadius: 100 }}>
               <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
               <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
                 style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
@@ -1169,16 +1064,7 @@ function FooterColumn({ title, items }: { title: string; items: string[] }) {
 // MAIN
 // ============================================
 export default function JavierBoscoLanding() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("theme") === "dark";
-    return false;
-  });
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "es");
-
-  useEffect(() => {
-    document.body.classList.toggle("dark", isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark]);
 
   useEffect(() => {
     localStorage.setItem("lang", lang);
@@ -1191,29 +1077,7 @@ export default function JavierBoscoLanding() {
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500&display=swap');
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           body {
-            --c-bg: #F5F2EB;
-            --c-bg-deep: #EAE7E0;
-            --c-bg-border: #D5D0C8;
-            --c-bg-border-hover: #C5BFB7;
-            --c-fg: #030303;
-            --c-fg-dim: #2A2522;
-            --c-nav-bg: rgba(245,242,235,0.94);
-            --c-nav-pill: rgba(200,195,185,0.3);
-            --c-search-pill: rgba(245,242,235,0.75);
-            --c-search-expanded: rgba(240,237,230,0.96);
-            background: var(--c-bg); overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-          }
-          body.dark {
-            --c-bg: #030303;
-            --c-bg-deep: #080808;
-            --c-bg-border: #1A1A1A;
-            --c-bg-border-hover: #2A2520;
-            --c-fg: #F5F2EB;
-            --c-fg-dim: #DDD8CE;
-            --c-nav-bg: rgba(3,3,3,0.88);
-            --c-nav-pill: rgba(3,3,3,0.5);
-            --c-search-pill: rgba(10,10,10,0.5);
-            --c-search-expanded: rgba(8,8,8,0.92);
+            background: #F5F2EB; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
           }
           ::selection { background: rgba(160,140,91,0.12); color: #F5F2EB; }
           ::placeholder { color: #9B958C; font-style: italic; }
@@ -1228,7 +1092,7 @@ export default function JavierBoscoLanding() {
             div[style*="grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
           }
         `}</style>
-        <NavHeader isDark={isDark} onToggle={() => setIsDark(d => !d)} lang={lang} setLang={setLang} />
+        <NavHeader lang={lang} setLang={setLang} />
         <Hero />
         <About />
         <PropiedadesDestacadas />
