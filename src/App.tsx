@@ -306,7 +306,7 @@ void main(){
   col.b-=fbm(uv*1.006+vec2(0,T*.012)+n+.006);
   col=mix(col, u_color, dot(col,vec3(.21,.71,.07)));
   col=mix(u_base,col,min(time*.1,1.)*u_intensity);
-  col=clamp(col,.02,.98);
+  col=clamp(col,.88,.98);
   O=vec4(col,1);
 }`;
 
@@ -589,7 +589,7 @@ function Hero() {
   const a = (d: number) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(35px)", transition: `all 1.4s cubic-bezier(0.16,1,0.3,1) ${d}s` });
   return (
     <section style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <SmokeCanvas color={[0.85, 0.85, 0.88]} base={[0.96, 0.94, 0.90]} intensity={1.0} />
+      <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.45) 100%)", zIndex: 1 }} />
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}>
         <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32, ...a(0.4) }}>
@@ -700,7 +700,7 @@ function SearchExpanded({ close, sliderVal, setSliderVal }: { close: () => void;
 }
 
 // ============================================
-// ABOUT
+// ABOUT (kept for reference)
 // ============================================
 function About() {
   const t = useT();
@@ -725,6 +725,45 @@ function About() {
             <div style={{ position: "relative" }}>
               <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 40 }}>
                 {t.about_text}
+              </p>
+              <div style={{ fontFamily: HEADING, fontSize: "clamp(72px, 11vw, 160px)", color: C.goldLine, fontWeight: 400, letterSpacing: "0.02em", lineHeight: 0.88, fontStyle: "italic", opacity: 0.4 }}>
+                BOSCO
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// LA FIRMA
+// ============================================
+function LaFirma() {
+  const t = useT();
+  return (
+    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative" }}>
+      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
+          <FadeIn>
+            <div>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>La firma</span>
+              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
+                Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones off-market de alto valor</span>.
+              </h2>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <LiquidButton href="#contacto">{t.btn_firma}</LiquidButton>
+                <LiquidButton href="#vender">{t.btn_valoracion}</LiquidButton>
+              </div>
+            </div>
+          </FadeIn>
+          <FadeIn delay={0.2}>
+            <div style={{ position: "relative" }}>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 40 }}>
+                Intermediación exclusiva en activos inmobiliarios fuera de mercado. Edificios, hoteles, residencial de lujo y activos singulares entre 1M€ y 200M€. Acceso directo a oportunidades que se mueven entre profesionales bajo acuerdo de confidencialidad.
               </p>
               <div style={{ fontFamily: HEADING, fontSize: "clamp(72px, 11vw, 160px)", color: C.goldLine, fontWeight: 400, letterSpacing: "0.02em", lineHeight: 0.88, fontStyle: "italic", opacity: 0.4 }}>
                 BOSCO
@@ -779,7 +818,7 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{ position: "relative", overflow: "hidden", borderRadius: 2, cursor: "pointer", transition: "all 0.6s" }}>
-      <div style={{ width: "100%", height: 460, overflow: "hidden", background: C.blackBorder }}>
+      <div style={{ width: "100%", height: 320, overflow: "hidden", background: C.blackBorder }}>
         <img src={property.image} alt={property.title}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: hover ? "scale(1.05)" : "scale(1)", filter: hover ? "brightness(0.75)" : "brightness(0.85)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
         <div style={{ position: "absolute", top: 20, right: 20, fontFamily: HEADING, fontSize: 14, letterSpacing: "0.25em", color: "rgba(245,242,235,0.5)", textTransform: "uppercase" }}>JB</div>
@@ -838,7 +877,7 @@ function DestinationCard({ destination }: { destination: typeof DESTINATIONS[0] 
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
+      style={{ position: "relative", aspectRatio: "4/5", maxHeight: 380, overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
       <img src={destination.image} alt={destination.name}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "grayscale(0) brightness(0.7)" : "grayscale(0.4) brightness(0.55)", transform: hover ? "scale(1.05)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 60%, rgba(3,3,3,0.92) 100%)" }} />
@@ -884,7 +923,7 @@ function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
+      style={{ position: "relative", aspectRatio: "4/5", maxHeight: 380, overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
       <img src={asset.image} alt={asset.name}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.7)" : "brightness(0.55)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.92) 100%)" }} />
@@ -903,10 +942,9 @@ function Vender() {
   const t = useT();
   const [address, setAddress] = useState("");
   return (
-    <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
-      <SmokeCanvas color={[0.85, 0.85, 0.88]} base={[0.96, 0.94, 0.90]} intensity={0.55} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 90% 70% at 50% 50%, transparent 0%, rgba(255,255,255,0.5) 100%)", zIndex: 1 }} />
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}>
+    <section id="vender" style={{ position: "relative", background: "#F8F7F4", minHeight: "80vh", display: "flex", alignItems: "center" }}>
+      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+      <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}>
         <FadeIn>
           <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_vender}</span>
           <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
@@ -917,13 +955,13 @@ function Vender() {
           </h2>
         </FadeIn>
         <FadeIn delay={0.3}>
-          <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
+          <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.greyDark, lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
             {t.vender_desc}
           </p>
         </FadeIn>
         <FadeIn delay={0.45}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, maxWidth: 640, margin: "0 auto 32px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "rgba(245,242,235,0.75)", backdropFilter: "blur(20px)", border: `1px solid ${C.goldLine}`, borderRadius: 100 }}>
+            <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
               <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
               <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
                 style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
@@ -1094,10 +1132,10 @@ export default function JavierBoscoLanding() {
         `}</style>
         <NavHeader lang={lang} setLang={setLang} />
         <Hero />
-        <About />
         <PropiedadesDestacadas />
-        <Destinos />
         <TiposActivo />
+        <Destinos />
+        <LaFirma />
         <Vender />
         <Contacto />
         <Footer />
