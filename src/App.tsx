@@ -548,7 +548,7 @@ function Hero() {
 
         {/* Logo */}
         <div style={{ marginBottom: 36, ...a(0.6) }}>
-          <img src="/javierbosco/logo.png" alt="Javier Bosco Properties"
+          <img src="/logo.png" alt="Javier Bosco Properties"
             style={{
               maxWidth: "clamp(340px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block",
               filter: "drop-shadow(0 0 60px rgba(160,140,91,0.25))",

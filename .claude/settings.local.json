@@ -13,7 +13,10 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(git reset:*)",
       "Bash(git restore:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git rebase:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
