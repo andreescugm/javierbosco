@@ -951,12 +951,12 @@ function Vender() {
           <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
         </FadeIn>
         <FadeIn delay={0.15}>
-          <h2 style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
+          <h2 style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: "#030303", lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
             {t.h_vender} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_vender_em}</span>.
           </h2>
         </FadeIn>
         <FadeIn delay={0.3}>
-          <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.greyDark, lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
+          <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: "#030303", lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
             {t.vender_desc}
           </p>
         </FadeIn>
@@ -965,7 +965,7 @@ function Vender() {
             <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
               <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
               <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
-                style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
+                style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: "#030303", fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
             </div>
             <LiquidButton href="#contacto" variant="solid">{t.btn_valoracion}</LiquidButton>
           </div>
