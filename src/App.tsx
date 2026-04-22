@@ -305,8 +305,8 @@ void main(){
   col.g-=fbm(uv*1.003+vec2(0,T*.012)+n+.003);
   col.b-=fbm(uv*1.006+vec2(0,T*.012)+n+.006);
   col=mix(col, u_color, dot(col,vec3(.21,.71,.07)));
-  col=mix(u_base,col,min(time*.1,1.)*u_intensity);
-  col=clamp(col,.88,.98);
+  col=mix(vec3(.95),col,min(time*.1,1.)*u_intensity);
+  col=clamp(col,.02,.98);
   O=vec4(col,1);
 }`;
 
@@ -590,7 +590,7 @@ function Hero() {
   return (
     <section style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
       <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.45) 100%)", zIndex: 1 }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.65) 100%)", zIndex: 1 }} />
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}>
         <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32, ...a(0.4) }}>
           {t.hero_sub}
@@ -818,7 +818,7 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{ position: "relative", overflow: "hidden", borderRadius: 2, cursor: "pointer", transition: "all 0.6s" }}>
-      <div style={{ width: "100%", height: 320, overflow: "hidden", background: C.blackBorder }}>
+      <div style={{ width: "100%", height: 460, overflow: "hidden", background: C.blackBorder }}>
         <img src={property.image} alt={property.title}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: hover ? "scale(1.05)" : "scale(1)", filter: hover ? "brightness(0.75)" : "brightness(0.85)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
         <div style={{ position: "absolute", top: 20, right: 20, fontFamily: HEADING, fontSize: 14, letterSpacing: "0.25em", color: "rgba(245,242,235,0.5)", textTransform: "uppercase" }}>JB</div>
@@ -877,7 +877,7 @@ function DestinationCard({ destination }: { destination: typeof DESTINATIONS[0] 
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "4/5", maxHeight: 380, overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
+      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
       <img src={destination.image} alt={destination.name}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "grayscale(0) brightness(0.7)" : "grayscale(0.4) brightness(0.55)", transform: hover ? "scale(1.05)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 60%, rgba(3,3,3,0.92) 100%)" }} />
@@ -923,7 +923,7 @@ function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "4/5", maxHeight: 380, overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
+      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
       <img src={asset.image} alt={asset.name}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.7)" : "brightness(0.55)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.92) 100%)" }} />
