@@ -7,7 +7,13 @@
       "Bash(git rm:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:andreescugm.github.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git reset:*)",
+      "Bash(git restore:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

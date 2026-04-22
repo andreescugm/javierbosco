@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, Children, ReactNode, createContext, useContext } from "react";
 import { motion, useMotionValue, AnimatePresence } from "framer-motion";
 import type { Transition } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, MapPin, Euro, Home } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, MapPin, Euro, Home, Sun, Moon } from "lucide-react";
 
 // ============================================
 // JAVIER BOSCO PROPERTIES — KRETZ × BOSCO FUSION
@@ -14,12 +14,12 @@ const C = {
   goldHover: "#BFA36D",
   goldDim: "rgba(160,140,91,0.12)",
   goldLine: "rgba(160,140,91,0.25)",
-  black: "#030303",
-  blackDeep: "#080808",
-  blackBorder: "#1A1A1A",
-  blackBorderHover: "#2A2520",
-  white: "#F5F2EB",
-  whiteDim: "#DDD8CE",
+  black: "var(--c-bg)",
+  blackDeep: "var(--c-bg-deep)",
+  blackBorder: "var(--c-bg-border)",
+  blackBorderHover: "var(--c-bg-border-hover)",
+  white: "var(--c-fg)",
+  whiteDim: "var(--c-fg-dim)",
   grey: "#9B958C",
   greyDark: "#6B6560",
   greySmoke: "#3E3A35",
@@ -217,8 +217,7 @@ function CarouselNavigation({ alwaysShow }: { alwaysShow?: boolean }) {
     <div className="pointer-events-none absolute left-0 top-1/2 flex w-full -translate-y-1/2 justify-between px-4">
       <button
         type="button" aria-label="Previous"
-        disabled={index === 0}
-        onClick={() => { if (index > 0) setIndex(index - 1); }}
+        onClick={() => setIndex(index === 0 ? itemsCount - 1 : index - 1)}
         style={{
           pointerEvents: "auto",
           background: "rgba(3,3,3,0.7)",
@@ -227,16 +226,15 @@ function CarouselNavigation({ alwaysShow }: { alwaysShow?: boolean }) {
           padding: 12,
           opacity: alwaysShow ? 1 : 0,
           transition: "all 0.4s",
-          cursor: index === 0 ? "not-allowed" : "pointer",
+          cursor: "pointer",
         }}
-        className="group-hover/hover:opacity-100 disabled:opacity-30"
+        className="group-hover/hover:opacity-100"
       >
         <ChevronLeft size={18} style={{ color: C.gold }} />
       </button>
       <button
         type="button" aria-label="Next"
-        disabled={index + 1 === itemsCount}
-        onClick={() => { if (index < itemsCount - 1) setIndex(index + 1); }}
+        onClick={() => setIndex(index === itemsCount - 1 ? 0 : index + 1)}
         style={{
           pointerEvents: "auto",
           background: "rgba(3,3,3,0.7)",
@@ -245,9 +243,9 @@ function CarouselNavigation({ alwaysShow }: { alwaysShow?: boolean }) {
           padding: 12,
           opacity: alwaysShow ? 1 : 0,
           transition: "all 0.4s",
-          cursor: index + 1 === itemsCount ? "not-allowed" : "pointer",
+          cursor: "pointer",
         }}
-        className="group-hover/hover:opacity-100 disabled:opacity-30"
+        className="group-hover/hover:opacity-100"
       >
         <ChevronRight size={18} style={{ color: C.gold }} />
       </button>
@@ -313,22 +311,54 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
+const LANG_OPTIONS = [
+  { code: "es", label: "Español" },
+  { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "it", label: "Italiano" },
+  { code: "pt", label: "Português" },
+  { code: "ru", label: "Русский" },
+  { code: "ar", label: "العربية" },
+  { code: "zh-CN", label: "中文" },
+];
+
 // ============================================
 // NAV HEADER (componente Bosco existente — animated cursor pill)
 // ============================================
-function NavHeader() {
+function NavHeader({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   const [cursor, setCursor] = useState({ left: 0, width: 0, opacity: 0 });
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", h);
     return () => window.removeEventListener("scroll", h);
   }, []);
+
+  useEffect(() => {
+    (window as any).googleTranslateElementInit = () => {
+      new (window as any).google.translate.TranslateElement(
+        { pageLanguage: "es", autoDisplay: false },
+        "google_translate_element"
+      );
+    };
+    if (!document.querySelector('script[src*="translate.google.com"]')) {
+      const s = document.createElement("script");
+      s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      document.body.appendChild(s);
+    }
+  }, []);
+
+  const changeLang = (lang: string) => {
+    const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+    if (combo) { combo.value = lang; combo.dispatchEvent(new Event("change")); }
+  };
+
   const tabs = [
     { label: "Destinos", href: "#destinos" },
     { label: "Activos", href: "#activos" },
     { label: "Vender", href: "#vender" },
-    { label: "La Firma", href: "#firma" },
     { label: "Contacto", href: "#contacto" },
   ];
   return (
@@ -336,17 +366,18 @@ function NavHeader() {
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: scrolled ? "14px 4vw" : "24px 4vw",
-      background: scrolled ? "rgba(3,3,3,0.88)" : "transparent",
+      background: scrolled ? "var(--c-nav-bg)" : "transparent",
       backdropFilter: scrolled ? "blur(24px) saturate(1.2)" : "none",
       borderBottom: scrolled ? `1px solid ${C.blackBorder}` : "1px solid transparent",
       transition: "all 0.7s cubic-bezier(0.25,0.1,0.25,1)",
     }}>
+      <div id="google_translate_element" style={{ display: "none" }} />
       <a href="#" style={{ fontFamily: HEADING, fontSize: 14, letterSpacing: "0.22em", color: C.white, textDecoration: "none", fontWeight: 400 }}>
         JAVIER BOSCO
       </a>
       <ul style={{
         position: "relative", display: "flex", listStyle: "none", margin: 0, padding: "4px",
-        borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "rgba(3,3,3,0.5)",
+        borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "var(--c-nav-pill)",
       }} onMouseLeave={() => setCursor(p => ({ ...p, opacity: 0 }))}>
         {tabs.map(t => <NavTab key={t.label} href={t.href} setCursor={setCursor}>{t.label}</NavTab>)}
         <li style={{
@@ -355,15 +386,45 @@ function NavHeader() {
           transition: "all 0.35s cubic-bezier(0.25,0.1,0.25,1)", pointerEvents: "none", zIndex: 0,
         }} />
       </ul>
-      <a href="tel:+34600000000" style={{
-        fontFamily: UI, fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
-        color: C.grey, textDecoration: "none", transition: "color 0.4s",
-      }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-        onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}
-      >
-        +34 · Contactar
-      </a>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <a href="tel:+34600000000" style={{
+          fontFamily: UI, fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
+          color: C.grey, textDecoration: "none", transition: "color 0.4s",
+        }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
+          onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}
+        >
+          +34 · Contactar
+        </a>
+        <select
+          defaultValue="es"
+          onChange={(e) => changeLang(e.target.value)}
+          style={{
+            background: "transparent", border: `1px solid ${C.blackBorder}`,
+            color: C.grey, fontFamily: UI, fontSize: 9, letterSpacing: "0.1em",
+            padding: "4px 8px", cursor: "pointer", borderRadius: 2, outline: "none",
+            transition: "border-color 0.4s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.gold)}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.blackBorder)}
+        >
+          {LANG_OPTIONS.map(l => <option key={l.code} value={l.code} style={{ background: "#030303" }}>{l.label}</option>)}
+        </select>
+        <button
+          onClick={onToggle}
+          style={{
+            background: "transparent", border: `1px solid ${C.blackBorder}`,
+            borderRadius: "50%", padding: 6, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: C.grey, transition: "all 0.4s",
+          }}
+          aria-label="Toggle theme"
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.gold; (e.currentTarget as HTMLButtonElement).style.color = C.gold; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.blackBorder; (e.currentTarget as HTMLButtonElement).style.color = C.grey; }}
+        >
+          {isDark ? <Sun size={14} /> : <Moon size={14} />}
+        </button>
+      </div>
     </nav>
   );
 }
@@ -531,7 +592,7 @@ function SearchPalette({ open, setOpen, sliderVal, setSliderVal }: { open: boole
           style={{
             width: "100%", display: "flex", alignItems: "center", gap: 16,
             padding: "20px 28px",
-            background: "rgba(10,10,10,0.6)", backdropFilter: "blur(20px)",
+            background: "rgba(10,10,10,0.5)", backdropFilter: "blur(20px)",
             border: `1px solid ${C.goldLine}`, borderRadius: 100,
             cursor: "pointer", transition: "all 0.5s", color: C.grey,
             fontFamily: BODY, fontSize: 17, letterSpacing: "0.03em", fontStyle: "italic",
@@ -651,7 +712,7 @@ function About() {
                 Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones que no se anuncian</span>.
               </h2>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <LiquidButton href="#firma">Conocer la firma</LiquidButton>
+                <LiquidButton href="#contacto">Conocer la firma</LiquidButton>
                 <LiquidButton href="#vender">Solicitar valoración</LiquidButton>
               </div>
             </div>
@@ -1044,82 +1105,6 @@ function Vender() {
 }
 
 // ============================================
-// LA FIRMA (credibilidad sin inventar datos)
-// ============================================
-function LaFirma() {
-  return (
-    <section id="firma" style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "start" }}>
-          <FadeIn>
-            <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>La firma</span>
-              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 40 }} />
-              <h2 style={{
-                fontFamily: HEADING, fontSize: "clamp(32px, 3.6vw, 52px)", fontWeight: 400,
-                color: C.white, lineHeight: 1.15, marginBottom: 36, letterSpacing: "0.01em",
-              }}>
-                Javier Bosco<br />
-                <span style={{ color: C.gold, fontStyle: "italic", fontSize: "0.7em" }}>Fundador</span>
-              </h2>
-              <p style={{
-                fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 19px)",
-                color: C.grey, lineHeight: 1.95, letterSpacing: "0.03em", fontWeight: 300,
-              }}>
-                Intermediario inmobiliario independiente especializado en operaciones off-market de alto valor.
-                Conecta compradores e inversores con activos que no están públicamente disponibles, gestionando cada operación
-                con discreción absoluta.
-              </p>
-            </div>
-          </FadeIn>
-
-          <div>
-            <FadeIn delay={0.2}>
-              <div style={{
-                borderLeft: `1px solid ${C.goldLine}`, paddingLeft: "clamp(24px, 3vw, 48px)",
-                marginBottom: "clamp(50px, 5vw, 80px)",
-              }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 18 }}>
-                  Feedback real de clientes
-                </div>
-                <div style={{
-                  fontFamily: HEADING, fontSize: "clamp(22px, 2vw, 32px)",
-                  color: C.whiteDim, fontStyle: "italic", lineHeight: 1.55, letterSpacing: "0.02em", fontWeight: 400,
-                }}>
-                  "Accede a operaciones que no están en el mercado."
-                </div>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.35}>
-              <div style={{ borderLeft: `1px solid ${C.blackBorder}`, paddingLeft: "clamp(24px, 3vw, 48px)", marginBottom: 40 }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 14 }}>Cómo trabajamos</div>
-                <div style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.15vw, 17px)", color: C.grey, lineHeight: 1.95, fontWeight: 300 }}>
-                  Cada operación comienza con una conversación privada. Sin formularios de captación masiva,
-                  sin seguimientos comerciales automatizados. Solo interés real, oportunidad real y cierre real.
-                </div>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.5}>
-              <div style={{ borderLeft: `1px solid ${C.blackBorder}`, paddingLeft: "clamp(24px, 3vw, 48px)" }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 14 }}>Qué no hacemos</div>
-                <div style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.15vw, 17px)", color: C.grey, lineHeight: 1.95, fontWeight: 300 }}>
-                  No trabajamos con residencial estándar, operaciones pequeñas ni producto sin componente estratégico.
-                  Cada operación se selecciona.
-                </div>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
 // CONTACTO FINAL
 // ============================================
 function Contacto() {
@@ -1196,7 +1181,7 @@ function Contacto() {
             </FadeIn>
             <FadeIn delay={0.5}>
               <div style={{ marginTop: 44 }}>
-                <LiquidButton href="#" variant="solid">Enviar solicitud</LiquidButton>
+                <LiquidButton href="#contacto" variant="solid">Enviar solicitud</LiquidButton>
               </div>
             </FadeIn>
           </div>
@@ -1288,12 +1273,42 @@ function FooterColumn({ title, items }: { title: string; items: string[] }) {
 // MAIN
 // ============================================
 export default function JavierBoscoLanding() {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("theme") === "dark";
+    return false;
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle("dark", isDark);
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  }, [isDark]);
+
   return (
     <div style={{ background: C.black, minHeight: "100vh", overflowX: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #030303; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body {
+          --c-bg: #F5F2EB;
+          --c-bg-deep: #EAE7E0;
+          --c-bg-border: #D5D0C8;
+          --c-bg-border-hover: #C5BFB7;
+          --c-fg: #030303;
+          --c-fg-dim: #2A2522;
+          --c-nav-bg: rgba(245,242,235,0.92);
+          --c-nav-pill: rgba(200,195,185,0.3);
+          background: var(--c-bg); overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }
+        body.dark {
+          --c-bg: #030303;
+          --c-bg-deep: #080808;
+          --c-bg-border: #1A1A1A;
+          --c-bg-border-hover: #2A2520;
+          --c-fg: #F5F2EB;
+          --c-fg-dim: #DDD8CE;
+          --c-nav-bg: rgba(3,3,3,0.88);
+          --c-nav-pill: rgba(3,3,3,0.5);
+        }
         ::selection { background: rgba(160,140,91,0.12); color: #F5F2EB; }
         ::placeholder { color: #4A453E; font-style: italic; }
         html { scroll-behavior: smooth; }
@@ -1311,22 +1326,22 @@ export default function JavierBoscoLanding() {
         }
         @media (max-width: 900px) {
           nav > ul { display: none !important; }
-          nav > a[href^="tel"] { display: none !important; }
         }
         @media (max-width: 768px) {
           div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
           div[style*="grid-template-columns: 1fr 1.2fr"] { grid-template-columns: 1fr !important; }
           div[style*="grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
         }
+        .goog-te-banner-frame, #goog-gt-tt { display: none !important; }
+        body { top: 0 !important; }
       `}</style>
-      <NavHeader />
+      <NavHeader isDark={isDark} onToggle={() => setIsDark(d => !d)} />
       <Hero />
       <About />
       <PropiedadesDestacadas />
       <Destinos />
       <TiposActivo />
       <Vender />
-      <LaFirma />
       <Contacto />
       <Footer />
     </div>
