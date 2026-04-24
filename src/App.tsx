@@ -525,16 +525,16 @@ function NavTab({ children, href, setCursor }: { children: ReactNode; href: stri
 // ============================================
 // LIQUID GLASS BUTTON
 // ============================================
-function LiquidButton({ children, href = "#", onClick, variant = "outline", size = "md" }: {
-  children: ReactNode; href?: string; onClick?: () => void; variant?: "outline" | "solid"; size?: "sm" | "md" | "lg";
+function LiquidButton({ children, href = "#", onClick, variant = "outline", size = "md", type }: {
+  children: ReactNode; href?: string; onClick?: () => void; variant?: "outline" | "solid"; size?: "sm" | "md" | "lg"; type?: "submit" | "button" | "reset";
 }) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const Tag = (onClick ? "button" : "a") as any;
+  const Tag = (onClick || type ? "button" : "a") as any;
   const sizes = { sm: { padding: "12px 32px", fontSize: 9 }, md: { padding: "18px 52px", fontSize: 11 }, lg: { padding: "22px 64px", fontSize: 12 } };
   const isSolid = variant === "solid";
   return (
-    <Tag href={onClick ? undefined : href} onClick={onClick}
+    <Tag href={(onClick || type) ? undefined : href} onClick={onClick} type={type}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
       onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)}
       style={{
@@ -981,6 +981,7 @@ function Vender() {
 function Contacto() {
   const t = useT();
   const [focused, setFocused] = useState<string | null>(null);
+  const [enviado, setEnviado] = useState(false);
   const inputStyle = (field: string) => ({
     background: "transparent", border: "none",
     borderBottom: `1px solid ${focused === field ? C.gold : C.blackBorder}`,
@@ -988,6 +989,42 @@ function Contacto() {
     padding: "16px 0", outline: "none", width: "100%",
     letterSpacing: "0.04em", transition: "border-color 0.5s", fontWeight: 300,
   });
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const nombre = formData.get('nombre');
+    const email = formData.get('email');
+    const telefono = formData.get('telefono') || '';
+    const prefijo = formData.get('prefijo') || '+34';
+    if (!nombre || !email) return;
+    try {
+      await fetch(
+        'https://api.hsforms.com/submissions/v3/integration/submit/245998933/d92a299b-ac4f-44c6-acef-b02278c834f9',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: [
+              { name: 'firstname', value: nombre },
+              { name: 'email', value: email },
+              { name: 'phone', value: prefijo + telefono }
+            ],
+            context: {
+              pageUri: window.location.href,
+              pageName: 'Javier Bosco Properties'
+            }
+          })
+        }
+      );
+      setEnviado(true);
+      setTimeout(() => {
+        setEnviado(false);
+        (e.target as HTMLFormElement).reset();
+      }, 5000);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <section id="contacto" style={{ padding: "clamp(100px, 12vw, 180px) 6vw", background: C.blackDeep, position: "relative" }}>
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
@@ -1016,32 +1053,50 @@ function Contacto() {
             </FadeIn>
           </div>
           <div style={{ paddingTop: "clamp(20px, 4vw, 60px)" }}>
+            <form onSubmit={handleSubmit}>
             <FadeIn delay={0.2}>
               <div style={{ marginBottom: 36 }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_nombre}</label>
-                <input style={inputStyle("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
+                <input name="nombre" style={inputStyle("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
               </div>
             </FadeIn>
             <FadeIn delay={0.3}>
               <div style={{ marginBottom: 36 }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_email}</label>
-                <input type="email" style={inputStyle("email")} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
+                <input name="email" type="email" style={inputStyle("email")} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
               </div>
             </FadeIn>
             <FadeIn delay={0.4}>
               <div style={{ marginBottom: 36 }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_telefono}</label>
                 <div style={{ display: "flex", gap: 12 }}>
-                  <input style={{ ...inputStyle("prefix"), width: 80, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
-                  <input type="tel" style={inputStyle("phone")} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
+                  <input name="prefijo" style={{ ...inputStyle("prefix"), width: 80, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
+                  <input name="telefono" type="tel" style={inputStyle("phone")} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
                 </div>
               </div>
             </FadeIn>
             <FadeIn delay={0.5}>
               <div style={{ marginTop: 44 }}>
-                <LiquidButton href="#contacto" variant="solid">{t.btn_enviar}</LiquidButton>
+                {enviado && (
+                  <div style={{
+                    padding: '16px 24px',
+                    background: 'rgba(160,140,91,0.12)',
+                    border: '1px solid rgba(160,140,91,0.25)',
+                    borderRadius: 4,
+                    marginBottom: 20,
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontSize: 15,
+                    color: '#A08C5B',
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  }}>
+                    ✓ Solicitud recibida. Le contactaremos en menos de 24 horas.
+                  </div>
+                )}
+                <LiquidButton type="submit" variant="solid">{t.btn_enviar}</LiquidButton>
               </div>
             </FadeIn>
+            </form>
           </div>
         </div>
       </div>
