@@ -596,7 +596,7 @@ function Hero() {
           {t.hero_sub}
         </div>
         <div style={{ marginBottom: 36, ...a(0.6) }}>
-          <img src="/logo.png" alt="Javier Bosco Properties"
+          <img src="/logoo.png" alt="Javier Bosco Properties"
             style={{ maxWidth: "clamp(340px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 0 60px rgba(160,140,91,0.25))" }} />
         </div>
         <div style={{ width: loaded ? 56 : 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 32px", transition: "width 2s cubic-bezier(0.16,1,0.3,1) 1.2s" }} />
@@ -780,12 +780,9 @@ function LaFirma() {
 // PROPIEDADES DESTACADAS
 // ============================================
 const PROPERTIES = [
-  { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&h=600&fit=crop&q=80", tag: "Madrid · El Viso", title: "Residencia Clásica", price: "7.200.000 €", meta: "420 m² · 5 hab" },
-  { image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900&h=600&fit=crop&q=80", tag: "Madrid · Castellana", title: "Edificio Corporativo", price: "42.000.000 €", meta: "8.200 m² · Oficinas" },
-  { image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&h=600&fit=crop&q=80", tag: "Madrid · La Moraleja", title: "Chalet Exclusivo", price: "4.500.000 €", meta: "680 m² · Parcela 2.400 m²" },
-  { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&h=600&fit=crop&q=80", tag: "Portfolio · Hospitality", title: "Cadena Hotelera Mediterráneo", price: "Precio bajo consulta", meta: "12 establecimientos · 200M€" },
-  { image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=900&h=600&fit=crop&q=80", tag: "Madrid · Salamanca", title: "Palacete del XIX", price: "14.000.000 €", meta: "Activo singular · 1.200 m²" },
-  { image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&h=600&fit=crop&q=80", tag: "Francia · Riviera", title: "Villa en la Costa Azul", price: "18.000.000 €", meta: "Residencial · 950 m²" },
+  { image: "/properties/chueca01.png", tag: "Madrid · Chueca", title: "Residencia de diseño", price: "Precio bajo consulta", meta: "Gran lujo · Interiorismo de autor" },
+  { image: "/properties/gracia01.jpeg", tag: "Madrid · Gracia", title: "Ático con terraza privada", price: "Precio bajo consulta", meta: "Terraza · Piscina · Vistas" },
+  { image: "/properties/plazamayor01.png", tag: "Madrid · Plaza Mayor", title: "Piso señorial reformado", price: "Precio bajo consulta", meta: "Centro histórico · Diseño contemporáneo" },
 ];
 function PropiedadesDestacadas() {
   const t = useT();
@@ -892,11 +889,13 @@ function DestinationCard({ destination }: { destination: typeof DESTINATIONS[0] 
 // TIPOS DE ACTIVO
 // ============================================
 const ASSET_TYPES = [
-  { image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=1000&fit=crop&q=80", name: "Edificios", desc: "Residenciales, corporativos, mixtos" },
-  { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=1000&fit=crop&q=80", name: "Hospitality", desc: "Hoteles y cadenas hoteleras" },
-  { image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=1000&fit=crop&q=80", name: "Residencial", desc: "Alto standing y ultra-lujo" },
-  { image: "https://images.unsplash.com/photo-1464938050520-ef2571e0d6e0?w=800&h=1000&fit=crop&q=80", name: "Terrenos", desc: "Solares estratégicos" },
-  { image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&h=1000&fit=crop&q=80", name: "Singulares", desc: "Palacios y activos únicos" },
+  { image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=750&fit=crop&q=80", name: "Solares", desc: "Parcelas urbanas estratégicas" },
+  { image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=750&fit=crop&q=80", name: "Terrenos", desc: "Fincas y terrenos rústicos" },
+  { image: "https://images.unsplash.com/photo-1555952494-efd681c7e3f9?w=600&h=750&fit=crop&q=80", name: "Edificios", desc: "Edificios completos y señoriales" },
+  { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=750&fit=crop&q=80", name: "Hoteles", desc: "Hoteles boutique y de lujo" },
+  { image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
+  { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
+  { image: "https://images.unsplash.com/photo-1558618666-fcd25c85f7e7?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
 ];
 function TiposActivo() {
   const t = useT();
@@ -913,25 +912,89 @@ function TiposActivo() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <SimpleCarousel items={ASSET_TYPES} renderItem={(a) => <AssetTypeCard asset={a} />} />
+          <div className="asset-grid" style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "clamp(12px, 1.5vw, 20px)",
+          }}>
+            {ASSET_TYPES.map((a, i) => (
+              <AssetTypeCard key={a.name} asset={a} span={i >= 6} />
+            ))}
+          </div>
+          <style>{`
+            @media (max-width: 1024px) {
+              .asset-grid { grid-template-columns: repeat(3, 1fr) !important; }
+            }
+            @media (max-width: 640px) {
+              .asset-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            }
+          `}</style>
         </FadeIn>
       </div>
     </section>
   );
 }
-function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
+function AssetTypeCard({ asset, span }: { asset: typeof ASSET_TYPES[0]; span?: boolean }) {
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
+      style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
       <img src={asset.image} alt={asset.name}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.7)" : "brightness(0.55)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.92) 100%)" }} />
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "32px 24px" }}>
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(24px, 2.2vw, 34px)", color: "#F5F2EB", letterSpacing: "0.02em", fontWeight: 400, marginBottom: 8 }}>{asset.name}</div>
-        <div style={{ fontFamily: BODY, fontSize: 14, color: C.gold, letterSpacing: "0.03em", fontStyle: "italic", fontWeight: 300 }}>{asset.desc}</div>
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.65) saturate(0.9)" : "brightness(0.45) saturate(0.7)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(3,3,3,0.88) 100%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "clamp(16px, 2vw, 24px)" }}>
+        <div style={{ fontFamily: HEADING, fontSize: "clamp(16px, 1.6vw, 24px)", color: "#F5F2EB", letterSpacing: "0.02em", fontWeight: 400, marginBottom: 4 }}>{asset.name}</div>
+        <div style={{ fontFamily: BODY, fontSize: "clamp(11px, 0.9vw, 13px)", color: C.gold, letterSpacing: "0.03em", fontStyle: "italic", fontWeight: 300 }}>{asset.desc}</div>
       </div>
     </div>
+  );
+}
+
+// ============================================
+// EXTRA — ACTIVOS DE LUJO BAJO SOLICITUD
+// ============================================
+function ExtraSection() {
+  return (
+    <section style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.black, position: "relative" }}>
+      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+      <div style={{ padding: "0 6vw", maxWidth: 1200, margin: "0 auto" }}>
+        <FadeIn>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(40px, 6vw, 100px)", alignItems: "center" }}>
+            {/* Image */}
+            <div style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2 }}>
+              <img src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&h=750&fit=crop&q=80" alt="Activos de lujo"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "brightness(0.5) saturate(0.8)" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.85) 100%)" }} />
+              <div style={{ position: "absolute", top: 20, right: 20 }}>
+                <span style={{
+                  fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase",
+                  color: C.gold, background: "rgba(3,3,3,0.7)", border: `1px solid ${C.goldLine}`,
+                  padding: "8px 16px", borderRadius: 2,
+                }}>Bajo solicitud</span>
+              </div>
+            </div>
+            {/* Content */}
+            <div>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>Más allá del inmobiliario</span>
+              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 4vw, 60px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, letterSpacing: "0.01em" }}>
+                <span style={{ color: C.gold, fontStyle: "italic" }}>Extra</span>
+              </h2>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 20 }}>
+                Yates, alquiler de embarcaciones, arte, y cualquier activo de alto standing. Lo que busque, lo conseguimos.
+              </p>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(14px, 1.1vw, 16px)", color: C.greyDark, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 300, fontStyle: "italic", marginBottom: 44 }}>
+                Servicio exclusivo bajo cita previa. Cada solicitud se gestiona de forma privada y confidencial.
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                <LiquidButton href="#contacto">Solicitar acceso</LiquidButton>
+                <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.25em", color: C.greyDark, textTransform: "uppercase" }}>Solo cita</span>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
   );
 }
 
@@ -1119,7 +1182,7 @@ function Footer() {
             <div style={{ fontFamily: BODY, fontSize: 14, color: C.grey, lineHeight: 1.8, fontWeight: 300, maxWidth: 260 }}>{t.footer_desc}</div>
           </div>
           <FooterColumn title={t.nav_destinos} items={["Madrid", "España", "Europa", "Internacional"]} />
-          <FooterColumn title={t.nav_activos} items={["Edificios", "Hospitality", "Residencial", "Terrenos", "Singulares"]} />
+          <FooterColumn title={t.nav_activos} items={["Solares", "Terrenos", "Edificios", "Hoteles", "Gran lujo", "Off market"]} />
           <FooterColumn title="La firma" items={["Filosofía", "Vender", "Valorar", "Contacto"]} />
           <div>
             <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.gold, textTransform: "uppercase", marginBottom: 20 }}>Social</div>
@@ -1190,6 +1253,7 @@ export default function JavierBoscoLanding() {
         <Hero />
         <PropiedadesDestacadas />
         <TiposActivo />
+        <ExtraSection />
         <Destinos />
         <LaFirma />
         <Vender />
