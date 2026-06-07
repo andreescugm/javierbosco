@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ReactNode, createContext, useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, MapPin, Home } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { Search, MapPin, Home } from "lucide-react";
+import Lenis from "lenis";
 
 const C = {
   gold: "#A08C5B",
@@ -13,8 +14,8 @@ const C = {
   blackBorderHover: "#C5BFB7",
   white: "#030303",
   whiteDim: "#2A2522",
-  grey: "#9B958C",
-  greyDark: "#6B6560",
+  grey: "#706A62",
+  greyDark: "#605B55",
   greySmoke: "#3E3A35",
 };
 
@@ -368,70 +369,97 @@ function SmokeCanvas({
 }
 
 // ============================================
-// SIMPLE CAROUSEL — 1 item at a time, infinite loop
+// SHARED ANIMATION CONFIG
 // ============================================
-function SimpleCarousel({ items, renderItem }: { items: any[]; renderItem: (item: any) => ReactNode }) {
+const ease = [0.25, 0.1, 0.25, 1] as const;
+const VP = { once: true, amount: 0.15 } as const;
+
+// ============================================
+// DRAG CAROUSEL — swipe/drag enabled, 1 item at a time
+// ============================================
+function DragCarousel({ items, renderItem }: { items: any[]; renderItem: (item: any) => ReactNode }) {
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const n = items.length;
   const go = (d: number) => { setDir(d); setIdx(i => (i + d + n) % n); };
-  const btnStyle = {
+  const handleDragEnd = (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
+    if (info.offset.x < -50 || info.velocity.x < -400) go(1);
+    else if (info.offset.x > 50 || info.velocity.x > 400) go(-1);
+  };
+  const btnBase = {
     background: "rgba(10,8,5,0.55)", border: `1px solid ${C.goldLine}`,
-    borderRadius: "50%", padding: 12, cursor: "pointer", display: "flex",
+    borderRadius: "50%", width: 44, height: 44, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    transition: "all 0.4s",
   };
   return (
     <div style={{ position: "relative" }}>
-      <div style={{ overflow: "hidden" }}>
+      <div style={{ overflow: "hidden", touchAction: "pan-y" }}>
         <AnimatePresence mode="wait" custom={dir}>
-          <motion.div key={idx}
+          <motion.div
+            key={idx}
             custom={dir}
-            initial={(d: number) => ({ x: d * 60, opacity: 0 })}
+            initial={(d: number) => ({ x: d * 200, opacity: 0 })}
             animate={{ x: 0, opacity: 1 }}
-            exit={(d: number) => ({ x: -d * 60, opacity: 0 })}
-            transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+            exit={(d: number) => ({ x: -d * 200, opacity: 0 })}
+            transition={{ duration: 0.6, ease }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.12}
+            onDragEnd={handleDragEnd}
+            style={{ cursor: "grab" }}
+            whileTap={{ cursor: "grabbing" }}
           >
             {renderItem(items[idx])}
           </motion.div>
         </AnimatePresence>
       </div>
+      {/* Arrows */}
       <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", justifyContent: "space-between", padding: "0 16px", pointerEvents: "none" }}>
-        <button type="button" aria-label="Previous" onClick={() => go(-1)} style={{ ...btnStyle, pointerEvents: "auto" }}>
-          <ChevronLeft size={18} style={{ color: C.gold }} />
+        <button type="button" aria-label="Previous" onClick={() => go(-1)}
+          style={{ ...btnBase, pointerEvents: "auto" }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button type="button" aria-label="Next" onClick={() => go(1)} style={{ ...btnStyle, pointerEvents: "auto" }}>
-          <ChevronRight size={18} style={{ color: C.gold }} />
+        <button type="button" aria-label="Next" onClick={() => go(1)}
+          style={{ ...btnBase, pointerEvents: "auto" }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
-      <div style={{ textAlign: "center", marginTop: 24, fontFamily: "'Inter','Helvetica Neue',sans-serif", fontSize: 9, letterSpacing: "0.25em", color: C.greyDark }}>
-        {idx + 1} / {n}
+      {/* Dots */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 28 }}>
+        {items.map((_, i) => (
+          <button key={i} onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i); }}
+            style={{
+              width: idx === i ? 24 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer",
+              background: idx === i ? C.gold : C.blackBorder,
+              transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)",
+            }}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 // ============================================
-// UTILITIES
+// FADE-IN — Framer Motion whileInView (once: true)
 // ============================================
-function useInView(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return [ref, inView] as const;
-}
-function FadeIn({ children, delay = 0, y = 40 }: { children: ReactNode; delay?: number; y?: number }) {
-  const [ref, inView] = useInView(0.12);
+function FadeIn({ children, delay = 0, y = 30 }: { children: ReactNode; delay?: number; y?: number }) {
   return (
-    <div ref={ref} style={{
-      opacity: inView ? 1 : 0,
-      transform: inView ? "translateY(0) scale(1)" : `translateY(${y}px) scale(0.98)`,
-      transition: `opacity 1s cubic-bezier(0.16,1,0.3,1) ${delay}s, transform 1.2s cubic-bezier(0.16,1,0.3,1) ${delay}s`,
-    }}>{children}</div>
+    <motion.div
+      initial={{ opacity: 0, y, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={VP}
+      transition={{ duration: 1, delay, ease }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
@@ -582,37 +610,58 @@ function InvestmentSlider({ value, onChange }: { value: number; onChange: (v: nu
 // ============================================
 function Hero() {
   const t = useT();
-  const [loaded, setLoaded] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [sliderVal, setSliderVal] = useState(3);
-  useEffect(() => { setTimeout(() => setLoaded(true), 200); }, []);
-  const a = (d: number) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(35px)", transition: `all 1.4s cubic-bezier(0.16,1,0.3,1) ${d}s` });
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const smokeY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+
+  const container = { hidden: {}, visible: { transition: { staggerChildren: 0.18, delayChildren: 0.3 } } };
+  const item = { hidden: { opacity: 0, y: 35 }, visible: { opacity: 1, y: 0, transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] } } };
+
   return (
-    <section style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
+    <section ref={heroRef} style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <motion.div style={{ position: "absolute", inset: 0, y: smokeY }}>
+        <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
+      </motion.div>
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.65) 100%)", zIndex: 1 }} />
-      <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}>
-        <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32, ...a(0.4) }}>
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="visible"
+        style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}
+      >
+        <motion.div variants={item} style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32 }}>
           {t.hero_sub}
-        </div>
-        <div style={{ marginBottom: 36, ...a(0.6) }}>
+        </motion.div>
+        <motion.div variants={item} style={{ marginBottom: 36 }}>
           <img src="/logoo.png" alt="Javier Bosco Properties"
             style={{ maxWidth: "clamp(340px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 0 60px rgba(160,140,91,0.25))" }} />
-        </div>
-        <div style={{ width: loaded ? 56 : 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 32px", transition: "width 2s cubic-bezier(0.16,1,0.3,1) 1.2s" }} />
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(18px, 2.2vw, 26px)", color: C.gold, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 44, ...a(1.0) }}>
+        </motion.div>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: 56 }}
+          transition={{ duration: 2, ease: [0.16, 1, 0.3, 1], delay: 1.2 }}
+          style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 32px" }}
+        />
+        <motion.div variants={item} style={{ fontFamily: HEADING, fontSize: "clamp(18px, 2.2vw, 26px)", color: C.gold, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 44 }}>
           {t.tagline}
-        </div>
-        <div style={a(1.3)}>
+        </motion.div>
+        <motion.div variants={item}>
           <SearchPalette open={searchOpen} setOpen={setSearchOpen} sliderVal={sliderVal} setSliderVal={setSliderVal} />
-        </div>
-      </div>
-      <div style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: loaded ? 0.4 : 0, transition: "opacity 1.5s ease 3s" }}>
+        </motion.div>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.4 }}
+        transition={{ delay: 3, duration: 1.5 }}
+        style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}
+      >
         <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.35em", color: C.greyDark, textTransform: "uppercase" }}>{t.scroll}</span>
         <div style={{ width: 1, height: 32, background: C.blackBorder, position: "relative", overflow: "hidden" }}>
           <div style={{ width: 1, height: 16, background: C.gold, animation: "scrollDown 2.2s ease-in-out infinite" }} />
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -799,7 +848,7 @@ function PropiedadesDestacadas() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <SimpleCarousel items={PROPERTIES} renderItem={(p) => <PropertyCard property={p} />} />
+          <DragCarousel items={PROPERTIES} renderItem={(p) => <PropertyCard property={p} />} />
         </FadeIn>
         <FadeIn delay={0.4}>
           <p style={{ textAlign: "center", marginTop: 60, fontFamily: BODY, fontSize: 15, color: C.greyDark, letterSpacing: "0.04em", fontStyle: "italic", fontWeight: 300 }}>
@@ -864,7 +913,7 @@ function Destinos() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <SimpleCarousel items={DESTINATIONS} renderItem={(d) => <DestinationCard destination={d} />} />
+          <DragCarousel items={DESTINATIONS} renderItem={(d) => <DestinationCard destination={d} />} />
         </FadeIn>
       </div>
     </section>
@@ -911,30 +960,39 @@ function TiposActivo() {
             </h2>
           </div>
         </FadeIn>
-        <FadeIn delay={0.2}>
-          <div className="asset-grid" style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "clamp(12px, 1.5vw, 20px)",
-          }}>
-            {ASSET_TYPES.map((a, i) => (
-              <AssetTypeCard key={a.name} asset={a} span={i >= 6} />
-            ))}
-          </div>
-          <style>{`
-            @media (max-width: 1024px) {
-              .asset-grid { grid-template-columns: repeat(3, 1fr) !important; }
-            }
-            @media (max-width: 640px) {
-              .asset-grid { grid-template-columns: repeat(2, 1fr) !important; }
-            }
-          `}</style>
-        </FadeIn>
+        <motion.div
+          className="asset-grid"
+          style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px, 1.5vw, 20px)" }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={VP}
+        >
+          {ASSET_TYPES.map((a) => (
+            <motion.div
+              key={a.name}
+              variants={{
+                hidden: { opacity: 0, y: 24, scale: 0.96 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease } },
+              }}
+            >
+              <AssetTypeCard asset={a} />
+            </motion.div>
+          ))}
+        </motion.div>
+        <style>{`
+          @media (max-width: 1024px) {
+            .asset-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          }
+          @media (max-width: 640px) {
+            .asset-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          }
+        `}</style>
       </div>
     </section>
   );
 }
-function AssetTypeCard({ asset, span }: { asset: typeof ASSET_TYPES[0]; span?: boolean }) {
+function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
@@ -1004,36 +1062,37 @@ function ExtraSection() {
 function Vender() {
   const t = useT();
   const [address, setAddress] = useState("");
+  const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } } };
+  const reveal = { hidden: { opacity: 0, y: 25 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease } } };
+  const lineReveal = { hidden: { width: 0 }, visible: { width: 32, transition: { duration: 1.2, ease } } };
   return (
     <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
       <SmokeCanvas color={[0.60, 0.57, 0.50]} base={[0.96, 0.94, 0.90]} intensity={0.25} />
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder, zIndex: 1 }} />
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}>
-        <FadeIn>
-          <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_vender}</span>
-          <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
-        </FadeIn>
-        <FadeIn delay={0.15}>
-          <h2 style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: "#030303", lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
-            {t.h_vender} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_vender_em}</span>.
-          </h2>
-        </FadeIn>
-        <FadeIn delay={0.3}>
-          <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: "#030303", lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
-            {t.vender_desc}
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.45}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, maxWidth: 640, margin: "0 auto 32px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
-              <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
-              <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
-                style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: "#030303", fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
-            </div>
-            <LiquidButton href="#contacto" variant="solid">{t.btn_valoracion}</LiquidButton>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={VP}
+        style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}
+      >
+        <motion.span variants={reveal} style={{ display: "block", fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_vender}</motion.span>
+        <motion.div variants={lineReveal} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
+        <motion.h2 variants={reveal} style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: "#030303", lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
+          {t.h_vender} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_vender_em}</span>.
+        </motion.h2>
+        <motion.p variants={reveal} style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: "#030303", lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
+          {t.vender_desc}
+        </motion.p>
+        <motion.div variants={reveal} style={{ display: "flex", alignItems: "center", gap: 16, maxWidth: 640, margin: "0 auto 32px", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
+            <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
+            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
+              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: "#030303", fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
           </div>
-        </FadeIn>
-      </div>
+          <LiquidButton href="#contacto" variant="solid">{t.btn_valoracion}</LiquidButton>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
@@ -1045,13 +1104,20 @@ function Contacto() {
   const t = useT();
   const [focused, setFocused] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
-  const inputStyle = (field: string) => ({
+  const inputStyle = {
     background: "transparent", border: "none",
-    borderBottom: `1px solid ${focused === field ? C.gold : C.blackBorder}`,
-    color: C.white, fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)",
+    borderBottom: `1px solid ${C.blackBorder}`,
+    color: C.white, fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)" as const,
     padding: "16px 0", outline: "none", width: "100%",
-    letterSpacing: "0.04em", transition: "border-color 0.5s", fontWeight: 300,
-  });
+    letterSpacing: "0.04em", fontWeight: 300,
+  };
+  const GoldUnderline = ({ active }: { active: boolean }) => (
+    <motion.div
+      animate={{ scaleX: active ? 1 : 0 }}
+      transition={{ duration: 0.5, ease }}
+      style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: C.gold, transformOrigin: "center" }}
+    />
+  );
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -1118,23 +1184,31 @@ function Contacto() {
           <div style={{ paddingTop: "clamp(20px, 4vw, 60px)" }}>
             <form onSubmit={handleSubmit}>
             <FadeIn delay={0.2}>
-              <div style={{ marginBottom: 36 }}>
+              <div style={{ marginBottom: 36, position: "relative" }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_nombre}</label>
-                <input name="nombre" style={inputStyle("name")} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
+                <input name="nombre" style={inputStyle} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
+                <GoldUnderline active={focused === "name"} />
               </div>
             </FadeIn>
             <FadeIn delay={0.3}>
-              <div style={{ marginBottom: 36 }}>
+              <div style={{ marginBottom: 36, position: "relative" }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_email}</label>
-                <input name="email" type="email" style={inputStyle("email")} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
+                <input name="email" type="email" style={inputStyle} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
+                <GoldUnderline active={focused === "email"} />
               </div>
             </FadeIn>
             <FadeIn delay={0.4}>
               <div style={{ marginBottom: 36 }}>
                 <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_telefono}</label>
                 <div style={{ display: "flex", gap: 12 }}>
-                  <input name="prefijo" style={{ ...inputStyle("prefix"), width: 80, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
-                  <input name="telefono" type="tel" style={inputStyle("phone")} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
+                  <div style={{ position: "relative", width: 80 }}>
+                    <input name="prefijo" style={{ ...inputStyle, width: 80, textAlign: "center" as const }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
+                    <GoldUnderline active={focused === "prefix"} />
+                  </div>
+                  <div style={{ position: "relative", flex: 1 }}>
+                    <input name="telefono" type="tel" style={inputStyle} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
+                    <GoldUnderline active={focused === "phone"} />
+                  </div>
                 </div>
               </div>
             </FadeIn>
@@ -1172,19 +1246,27 @@ function Contacto() {
 // ============================================
 function Footer() {
   const t = useT();
+  const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+  const col = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } };
   return (
     <footer style={{ background: C.black, borderTop: `1px solid ${C.blackBorder}`, padding: "60px 6vw 30px" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr 1fr", gap: 40, paddingBottom: 50, borderBottom: `1px solid ${C.blackBorder}` }}>
-          <div>
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={VP}
+          style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr 1fr", gap: 40, paddingBottom: 50, borderBottom: `1px solid ${C.blackBorder}` }}
+        >
+          <motion.div variants={col}>
             <div style={{ fontFamily: HEADING, fontSize: 18, letterSpacing: "0.2em", color: C.white, marginBottom: 16 }}>JAVIER BOSCO</div>
             <div style={{ fontFamily: HEADING, fontSize: 12, letterSpacing: "0.05em", color: C.gold, fontStyle: "italic", marginBottom: 24 }}>{t.tagline}</div>
             <div style={{ fontFamily: BODY, fontSize: 14, color: C.grey, lineHeight: 1.8, fontWeight: 300, maxWidth: 260 }}>{t.footer_desc}</div>
-          </div>
-          <FooterColumn title={t.nav_destinos} items={["Madrid", "España", "Europa", "Internacional"]} />
-          <FooterColumn title={t.nav_activos} items={["Solares", "Terrenos", "Edificios", "Hoteles", "Gran lujo", "Off market"]} />
-          <FooterColumn title="La firma" items={["Filosofía", "Vender", "Valorar", "Contacto"]} />
-          <div>
+          </motion.div>
+          <motion.div variants={col}><FooterColumn title={t.nav_destinos} items={["Madrid", "España", "Europa", "Internacional"]} /></motion.div>
+          <motion.div variants={col}><FooterColumn title={t.nav_activos} items={["Solares", "Terrenos", "Edificios", "Hoteles", "Gran lujo", "Off market"]} /></motion.div>
+          <motion.div variants={col}><FooterColumn title="La firma" items={["Filosofía", "Vender", "Valorar", "Contacto"]} /></motion.div>
+          <motion.div variants={col}>
             <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.gold, textTransform: "uppercase", marginBottom: 20 }}>Social</div>
             <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer"
               style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", fontWeight: 300 }}
@@ -1194,12 +1276,18 @@ function Footer() {
               style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", transition: "color 0.4s", fontWeight: 300 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
               onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}>Email</a>
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, flexWrap: "wrap", gap: 12 }}>
+          </motion.div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={VP}
+          transition={{ duration: 0.8, delay: 0.4, ease }}
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, flexWrap: "wrap", gap: 12 }}
+        >
           <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>© 2026 Javier Bosco Properties</span>
           <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>Madrid · España</span>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );
@@ -1227,6 +1315,21 @@ export default function JavierBoscoLanding() {
     localStorage.setItem("lang", lang);
   }, [lang]);
 
+  // Lenis smooth scroll
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    return () => lenis.destroy();
+  }, []);
+
   return (
     <LangContext.Provider value={lang}>
       <div style={{ background: C.black, minHeight: "100vh", overflowX: "hidden" }}>
@@ -1238,7 +1341,8 @@ export default function JavierBoscoLanding() {
           }
           ::selection { background: rgba(160,140,91,0.12); color: #F5F2EB; }
           ::placeholder { color: #9B958C; font-style: italic; }
-          html { scroll-behavior: smooth; }
+          html.lenis, html.lenis body { height: auto; }
+          .lenis.lenis-smooth { scroll-behavior: auto !important; }
           @keyframes scrollDown { 0% { transform: translateY(-16px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(32px); opacity: 0; } }
           input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #A08C5B; border: 2px solid #F5F2EB; cursor: pointer; box-shadow: 0 0 12px rgba(160,140,91,0.3); }
           input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #A08C5B; border: 2px solid #F5F2EB; cursor: pointer; }
