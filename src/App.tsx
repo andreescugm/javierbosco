@@ -2,9 +2,11 @@ import { useState, useEffect, useRef, ReactNode, createContext, useContext } fro
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Search, MapPin, Home } from "lucide-react";
 import Lenis from "lenis";
+import { CardStack } from "./components/CardStack";
 
 const C = {
   gold: "#A08C5B",
+  goldText: "#7E6D3F",
   goldHover: "#BFA36D",
   goldDim: "rgba(160,140,91,0.12)",
   goldLine: "rgba(160,140,91,0.25)",
@@ -759,7 +761,7 @@ function About() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
           <FadeIn>
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>La firma</span>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>La firma</span>
               <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
                 Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones que no se anuncian</span>.
@@ -798,7 +800,7 @@ function LaFirma() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
           <FadeIn>
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>La firma</span>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>La firma</span>
               <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
                 Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones off-market de alto valor</span>.
@@ -841,7 +843,7 @@ function PropiedadesDestacadas() {
       <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
         <FadeIn>
           <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
-            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_activos}</span>
+            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_activos}</span>
             <h2 style={{ fontFamily: HEADING, fontSize: "clamp(44px, 7vw, 120px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
               {t.h_activos}
             </h2>
@@ -871,7 +873,7 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(3,3,3,0.95) 0%, transparent 55%)" }} />
       </div>
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px" }}>
-        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.gold, textTransform: "uppercase", marginBottom: 10 }}>{property.tag}</div>
+        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.goldText, textTransform: "uppercase", marginBottom: 10 }}>{property.tag}</div>
         <div style={{ fontFamily: HEADING, fontSize: 22, fontWeight: 400, color: C.white, letterSpacing: "0.01em", marginBottom: 8 }}>{property.title}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", borderTop: `1px solid ${hover ? C.goldLine : "rgba(255,255,255,0.1)"}`, paddingTop: 14, marginTop: 14, transition: "border-color 0.5s" }}>
           <span style={{ fontFamily: BODY, fontSize: 14, color: C.whiteDim, fontWeight: 300, letterSpacing: "0.02em" }}>{property.meta}</span>
@@ -886,12 +888,12 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
 // DESTINOS
 // ============================================
 const DESTINATIONS = [
-  { image: "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=800&h=1000&fit=crop&q=80", name: "MADRID" },
-  { image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=1000&fit=crop&q=80", name: "BARCELONA" },
-  { image: "https://images.unsplash.com/photo-1611029473595-e9a54c4c0f45?w=800&h=1000&fit=crop&q=80", name: "MARBELLA" },
-  { image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=1000&fit=crop&q=80", name: "PARÍS" },
-  { image: "https://images.unsplash.com/photo-1520939817895-060bdaf4fe1b?w=800&h=1000&fit=crop&q=80", name: "GSTAAD" },
-  { image: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=800&h=1000&fit=crop&q=80", name: "LONDRES" },
+  { id: "madrid", title: "MADRID", tag: "Centro de operaciones", description: "El Viso, Salamanca, Castellana, Chamberí", imageSrc: "https://images.unsplash.com/photo-1539037116277-4db20889f2d7?w=800&h=1000&fit=crop&q=80" },
+  { id: "barcelona", title: "BARCELONA", tag: "Activos premium", description: "Eixample, Pedralbes, Sarrià, Diagonal Mar", imageSrc: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=1000&fit=crop&q=80" },
+  { id: "marbella", title: "MARBELLA", tag: "Costa del Sol", description: "La Zagaleta, Sierra Blanca, Puerto Banús", imageSrc: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&h=1000&fit=crop&q=80" },
+  { id: "paris", title: "PARÍS", tag: "Internacional", description: "XVI arrondissement, Saint-Germain, Marais", imageSrc: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800&h=1000&fit=crop&q=80" },
+  { id: "gstaad", title: "GSTAAD", tag: "Alpes suizos", description: "Chalets exclusivos, estaciones de esquí", imageSrc: "https://images.unsplash.com/photo-1520939817895-060bdaf4fe1b?w=800&h=1000&fit=crop&q=80" },
+  { id: "londres", title: "LONDRES", tag: "Capital financiera", description: "Mayfair, Belgravia, Knightsbridge, Chelsea", imageSrc: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=1000&fit=crop&q=80" },
 ];
 function Destinos() {
   const t = useT();
@@ -902,7 +904,7 @@ function Destinos() {
         <FadeIn>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "clamp(50px, 6vw, 90px)", flexWrap: "wrap", gap: 20 }}>
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_destinos}</span>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_destinos}</span>
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 80px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
                 {t.h_destinos} <span style={{ fontStyle: "italic", color: C.gold }}>{t.h_destinos_local}</span>.
               </h2>
@@ -913,24 +915,26 @@ function Destinos() {
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <DragCarousel items={DESTINATIONS} renderItem={(d) => <DestinationCard destination={d} />} />
+          <CardStack
+            items={DESTINATIONS}
+            cardWidth={380}
+            cardHeight={480}
+            overlap={0.52}
+            spreadDeg={42}
+            tiltXDeg={10}
+            activeLiftPx={18}
+            activeScale={1.02}
+            inactiveScale={0.92}
+            autoAdvance
+            intervalMs={4000}
+            pauseOnHover
+            dotColor="rgba(126,109,63,0.3)"
+            dotActiveColor={C.goldText}
+            borderColor={C.goldLine}
+          />
         </FadeIn>
       </div>
     </section>
-  );
-}
-function DestinationCard({ destination }: { destination: typeof DESTINATIONS[0] }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
-      <img src={destination.image} alt={destination.name}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "grayscale(0) brightness(0.7)" : "grayscale(0.4) brightness(0.55)", transform: hover ? "scale(1.05)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 60%, rgba(3,3,3,0.92) 100%)" }} />
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "32px 24px" }}>
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(22px, 2vw, 32px)", color: "#F5F2EB", letterSpacing: "0.12em", fontWeight: 400 }}>{destination.name}</div>
-      </div>
-    </div>
   );
 }
 
@@ -938,12 +942,12 @@ function DestinationCard({ destination }: { destination: typeof DESTINATIONS[0] 
 // TIPOS DE ACTIVO
 // ============================================
 const ASSET_TYPES = [
-  { image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=750&fit=crop&q=80", name: "Solares", desc: "Parcelas urbanas estratégicas" },
-  { image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=750&fit=crop&q=80", name: "Terrenos", desc: "Fincas y terrenos rústicos" },
-  { image: "https://images.unsplash.com/photo-1555952494-efd681c7e3f9?w=600&h=750&fit=crop&q=80", name: "Edificios", desc: "Edificios completos y señoriales" },
+  { image: "https://images.unsplash.com/photo-1621955511667-e2c316e4575d?w=600&h=750&fit=crop&q=80", name: "Solares", desc: "Parcelas urbanas estratégicas" },
+  { image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=750&fit=crop&q=80", name: "Terrenos", desc: "Fincas y terrenos rústicos" },
+  { image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&h=750&fit=crop&q=80", name: "Edificios", desc: "Edificios completos y señoriales" },
   { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=750&fit=crop&q=80", name: "Hoteles", desc: "Hoteles boutique y de lujo" },
-  { image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
-  { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
+  { image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
+  { image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
   { image: "https://images.unsplash.com/photo-1558618666-fcd25c85f7e7?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
 ];
 function TiposActivo() {
@@ -954,7 +958,7 @@ function TiposActivo() {
       <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
         <FadeIn>
           <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
-            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_tipologias}</span>
+            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_tipologias}</span>
             <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 80px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
               {t.h_tipologias} <span style={{ fontStyle: "italic", color: C.gold }}>{t.h_tipologias_em}</span>.
             </h2>
@@ -1020,7 +1024,7 @@ function ExtraSection() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(40px, 6vw, 100px)", alignItems: "center" }}>
             {/* Image */}
             <div style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2 }}>
-              <img src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&h=750&fit=crop&q=80" alt="Activos de lujo"
+              <img src="https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=600&h=750&fit=crop&q=80" alt="Activos de lujo"
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "brightness(0.5) saturate(0.8)" }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.85) 100%)" }} />
               <div style={{ position: "absolute", top: 20, right: 20 }}>
@@ -1033,7 +1037,7 @@ function ExtraSection() {
             </div>
             {/* Content */}
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>Más allá del inmobiliario</span>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>Más allá del inmobiliario</span>
               <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 4vw, 60px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, letterSpacing: "0.01em" }}>
                 <span style={{ color: C.gold, fontStyle: "italic" }}>Extra</span>
@@ -1076,7 +1080,7 @@ function Vender() {
         viewport={VP}
         style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}
       >
-        <motion.span variants={reveal} style={{ display: "block", fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_vender}</motion.span>
+        <motion.span variants={reveal} style={{ display: "block", fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_vender}</motion.span>
         <motion.div variants={lineReveal} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
         <motion.h2 variants={reveal} style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: "#030303", lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
           {t.h_vender} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_vender_em}</span>.
@@ -1161,7 +1165,7 @@ function Contacto() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "start" }}>
           <div>
             <FadeIn>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.section_contacto}</span>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_contacto}</span>
               <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(34px, 3.8vw, 56px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 32, letterSpacing: "0.01em" }}>
                 {t.h_contacto}<br /><span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_contacto_em}</span>.
@@ -1260,14 +1264,14 @@ function Footer() {
         >
           <motion.div variants={col}>
             <div style={{ fontFamily: HEADING, fontSize: 18, letterSpacing: "0.2em", color: C.white, marginBottom: 16 }}>JAVIER BOSCO</div>
-            <div style={{ fontFamily: HEADING, fontSize: 12, letterSpacing: "0.05em", color: C.gold, fontStyle: "italic", marginBottom: 24 }}>{t.tagline}</div>
+            <div style={{ fontFamily: HEADING, fontSize: 12, letterSpacing: "0.05em", color: C.goldText, fontStyle: "italic", marginBottom: 24 }}>{t.tagline}</div>
             <div style={{ fontFamily: BODY, fontSize: 14, color: C.grey, lineHeight: 1.8, fontWeight: 300, maxWidth: 260 }}>{t.footer_desc}</div>
           </motion.div>
           <motion.div variants={col}><FooterColumn title={t.nav_destinos} items={["Madrid", "España", "Europa", "Internacional"]} /></motion.div>
           <motion.div variants={col}><FooterColumn title={t.nav_activos} items={["Solares", "Terrenos", "Edificios", "Hoteles", "Gran lujo", "Off market"]} /></motion.div>
           <motion.div variants={col}><FooterColumn title="La firma" items={["Filosofía", "Vender", "Valorar", "Contacto"]} /></motion.div>
           <motion.div variants={col}>
-            <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.gold, textTransform: "uppercase", marginBottom: 20 }}>Social</div>
+            <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.goldText, textTransform: "uppercase", marginBottom: 20 }}>Social</div>
             <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer"
               style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", fontWeight: 300 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
@@ -1295,7 +1299,7 @@ function Footer() {
 function FooterColumn({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.gold, textTransform: "uppercase", marginBottom: 20 }}>{title}</div>
+      <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.goldText, textTransform: "uppercase", marginBottom: 20 }}>{title}</div>
       {items.map(it => (
         <a key={it} href="#" style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", fontWeight: 300 }}
           onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
@@ -1340,7 +1344,7 @@ export default function JavierBoscoLanding() {
             background: #F5F2EB; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
           }
           ::selection { background: rgba(160,140,91,0.12); color: #F5F2EB; }
-          ::placeholder { color: #9B958C; font-style: italic; }
+          ::placeholder { color: #706A62; font-style: italic; }
           html.lenis, html.lenis body { height: auto; }
           .lenis.lenis-smooth { scroll-behavior: auto !important; }
           @keyframes scrollDown { 0% { transform: translateY(-16px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(32px); opacity: 0; } }
