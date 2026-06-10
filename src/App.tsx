@@ -951,7 +951,7 @@ const ASSET_TYPES = [
   { image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=750&fit=crop&q=80", name: "Hoteles", desc: "Hoteles boutique y de lujo" },
   { image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
   { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
-  { image: "https://images.unsplash.com/photo-1587381420270-0e80f5386d23?w=600&h=750&fit=crop&q=80", name: "Activos singulares", desc: "Palacios, fincas históricas y patrimonio" },
+  { image: "https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?w=600&h=750&fit=crop&q=80", name: "Activos singulares", desc: "Palacios, fincas históricas y patrimonio" },
   { image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
 ];
 function TiposActivo() {
