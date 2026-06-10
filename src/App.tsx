@@ -1130,35 +1130,27 @@ function Contacto() {
     const formData = new FormData(e.currentTarget);
     const nombre = formData.get('nombre');
     const email = formData.get('email');
-    const telefono = formData.get('telefono') || '';
-    const prefijo = formData.get('prefijo') || '+34';
     if (!nombre || !email) return;
+    formData.append('_subject', 'Nueva solicitud desde javierbosco.com');
+    formData.append('_template', 'table');
+    formData.append('_captcha', 'false');
     try {
-      await fetch(
-        'https://api.hsforms.com/submissions/v3/integration/submit/245998933/d92a299b-ac4f-44c6-acef-b02278c834f9',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fields: [
-              { name: 'firstname', value: nombre },
-              { name: 'email', value: email },
-              { name: 'phone', value: prefijo + telefono }
-            ],
-            context: {
-              pageUri: window.location.href,
-              pageName: 'Javier Bosco Properties'
-            }
-          })
-        }
-      );
-      setEnviado(true);
-      setTimeout(() => {
-        setEnviado(false);
-        (e.target as HTMLFormElement).reset();
-      }, 5000);
+      const res = await fetch('https://formsubmit.co/ajax/javierbosco@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEnviado(true);
+        setTimeout(() => {
+          setEnviado(false);
+          (e.target as HTMLFormElement).reset();
+        }, 6000);
+      } else {
+        console.error('FormSubmit error:', data);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Error:', err);
     }
   };
   return (
@@ -1234,7 +1226,7 @@ function Contacto() {
                     fontStyle: 'italic',
                     textAlign: 'center'
                   }}>
-                    ✓ Solicitud recibida. Le contactaremos en menos de 24 horas.
+                    Solicitud recibida. Le contactaremos con la mayor brevedad posible.
                   </div>
                 )}
                 <LiquidButton type="submit" variant="solid">{t.btn_enviar}</LiquidButton>
