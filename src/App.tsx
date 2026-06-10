@@ -891,7 +891,7 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
 // DESTINOS
 // ============================================
 const DESTINATIONS = [
-  { id: "madrid", title: "MADRID", tag: "Centro de operaciones", description: "El Viso, Salamanca, Castellana, Chamberí", imageSrc: "https://images.unsplash.com/photo-1539037116277-4db20889f2d7?w=800&h=1000&fit=crop&q=80" },
+  { id: "madrid", title: "MADRID", tag: "Centro de operaciones", description: "El Viso, Salamanca, Castellana, Chamberí", imageSrc: "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=800&h=1000&fit=crop&q=80" },
   { id: "barcelona", title: "BARCELONA", tag: "Activos premium", description: "Eixample, Pedralbes, Sarrià, Diagonal Mar", imageSrc: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=1000&fit=crop&q=80" },
   { id: "marbella", title: "MARBELLA", tag: "Costa del Sol", description: "La Zagaleta, Sierra Blanca, Puerto Banús", imageSrc: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&h=1000&fit=crop&q=80" },
   { id: "paris", title: "PARÍS", tag: "Internacional", description: "XVI arrondissement, Saint-Germain, Marais", imageSrc: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800&h=1000&fit=crop&q=80" },
@@ -951,7 +951,7 @@ const ASSET_TYPES = [
   { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=750&fit=crop&q=80", name: "Hoteles", desc: "Hoteles boutique y de lujo" },
   { image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
   { image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
-  { image: "https://images.unsplash.com/photo-1558618666-fcd25c85f7e7?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
+  { image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
 ];
 function TiposActivo() {
   const t = useT();
