@@ -6,7 +6,7 @@ import { CardStack } from "./components/CardStack";
 
 const C = {
   gold: "#A08C5B",
-  goldText: "#7E6D3F",
+  goldText: "#6B5A2E",
   goldHover: "#BFA36D",
   goldDim: "rgba(160,140,91,0.12)",
   goldLine: "rgba(160,140,91,0.25)",
@@ -15,9 +15,9 @@ const C = {
   blackBorder: "#D5D0C8",
   blackBorderHover: "#C5BFB7",
   white: "#030303",
-  whiteDim: "#2A2522",
-  grey: "#706A62",
-  greyDark: "#605B55",
+  whiteDim: "#C8C2B8",
+  grey: "#585249",
+  greyDark: "#504B44",
   greySmoke: "#3E3A35",
 };
 
@@ -304,12 +304,13 @@ void main(){
   uv.x+=.25;uv*=vec2(2,1);
   float n=fbm(uv*.28-vec2(T*.008,0));
   n=noise(uv*3.+n*2.);
-  col.r-=fbm(uv+vec2(0,T*.012)+n);
-  col.g-=fbm(uv*1.003+vec2(0,T*.012)+n+.003);
-  col.b-=fbm(uv*1.006+vec2(0,T*.012)+n+.006);
+  col.r-=fbm(uv+vec2(0,T*.012)+n)*.55;
+  col.g-=fbm(uv*1.003+vec2(0,T*.012)+n+.003)*.55;
+  col.b-=fbm(uv*1.006+vec2(0,T*.012)+n+.006)*.55;
+  col=max(col,vec3(0.35));
   col=mix(col, u_color, dot(col,vec3(.21,.71,.07)));
-  col=mix(vec3(.95),col,min(time*.1,1.)*u_intensity);
-  col=clamp(col,.02,.98);
+  col=mix(vec3(.95),col,min(time*.5,1.)*u_intensity);
+  col=clamp(col,.25,.98);
   O=vec4(col,1);
 }`;
 
@@ -594,13 +595,13 @@ function InvestmentSlider({ value, onChange }: { value: number; onChange: (v: nu
     <div style={{ width: "100%" }}>
       <div style={{ position: "relative", height: 40, display: "flex", alignItems: "center" }}>
         <div style={{ position: "absolute", width: "100%", height: 3, background: C.blackBorder, borderRadius: 2 }} />
-        <div style={{ position: "absolute", width: `${(value / 6) * 100}%`, height: 3, background: C.gold, borderRadius: 2, transition: "width 0.2s" }} />
-        <input type="range" min={0} max={6} step={1} value={value} onChange={(e) => onChange(parseInt(e.target.value))}
+        <div style={{ position: "absolute", width: `${(value / 6) * 100}%`, height: 3, background: C.gold, borderRadius: 2, transition: "width 0.05s linear" }} />
+        <input type="range" min={0} max={6} step={0.01} value={value} onChange={(e) => onChange(parseFloat(e.target.value))}
           style={{ position: "absolute", width: "100%", height: 40, appearance: "none", background: "transparent", cursor: "pointer", zIndex: 2, outline: "none" }} />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
         {ticks.map((label, i) => (
-          <span key={i} style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase", color: value >= i ? C.gold : C.greyDark, transition: "color 0.3s", textAlign: "center", flex: 1 }}>{label}</span>
+          <span key={i} style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase", color: Math.round(value) >= i ? C.gold : C.greyDark, transition: "color 0.3s", textAlign: "center", flex: 1 }}>{label}</span>
         ))}
       </div>
     </div>
@@ -622,10 +623,12 @@ function Hero() {
   const item = { hidden: { opacity: 0, y: 35 }, visible: { opacity: 1, y: 0, transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] } } };
 
   return (
-    <section ref={heroRef} style={{ height: "100vh", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <motion.div style={{ position: "absolute", inset: 0, y: smokeY }}>
-        <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
-      </motion.div>
+    <section ref={heroRef} style={{ height: "100vh", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
+        <motion.div style={{ position: "absolute", inset: 0, y: smokeY }}>
+          <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
+        </motion.div>
+      </div>
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.65) 100%)", zIndex: 1 }} />
       <motion.div
         variants={container}
@@ -637,7 +640,7 @@ function Hero() {
           {t.hero_sub}
         </motion.div>
         <motion.div variants={item} style={{ marginBottom: 36 }}>
-          <img src="/logoo.png" alt="Javier Bosco Properties"
+          <img src="/logo.png" alt="Javier Bosco Properties"
             style={{ maxWidth: "clamp(340px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 0 60px rgba(160,140,91,0.25))" }} />
         </motion.div>
         <motion.div
@@ -728,13 +731,13 @@ function SearchExpanded({ close, sliderVal, setSliderVal }: { close: () => void;
           <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 10 }}>
             <Home size={14} style={{ color: C.gold }} />
             <select value={assetType} onChange={(e) => setAssetType(e.target.value)}
-              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, cursor: "pointer", appearance: "none", letterSpacing: "0.03em" }}>
-              <option value="">Seleccionar…</option>
-              <option value="edificio">Edificio</option>
-              <option value="hotel">Hotel / Hospitality</option>
-              <option value="residencial">Residencial de lujo</option>
-              <option value="terreno">Terreno</option>
-              <option value="singular">Activo singular</option>
+              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, cursor: "pointer", letterSpacing: "0.03em", WebkitAppearance: "menulist", MozAppearance: "auto" as any }}>
+              <option value="" style={{ background: "#EAE7E0", color: C.white }}>Seleccionar…</option>
+              <option value="edificio" style={{ background: "#EAE7E0", color: C.white }}>Edificio</option>
+              <option value="hotel" style={{ background: "#EAE7E0", color: C.white }}>Hotel / Hospitality</option>
+              <option value="residencial" style={{ background: "#EAE7E0", color: C.white }}>Residencial de lujo</option>
+              <option value="terreno" style={{ background: "#EAE7E0", color: C.white }}>Terreno</option>
+              <option value="singular" style={{ background: "#EAE7E0", color: C.white }}>Activo singular</option>
             </select>
           </div>
         </div>
@@ -756,7 +759,7 @@ function SearchExpanded({ close, sliderVal, setSliderVal }: { close: () => void;
 function About() {
   const t = useT();
   return (
-    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative" }}>
+    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative", overflow: "hidden" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
           <FadeIn>
@@ -794,7 +797,7 @@ function About() {
 function LaFirma() {
   const t = useT();
   return (
-    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative" }}>
+    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
@@ -1017,7 +1020,7 @@ function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
 // ============================================
 function ExtraSection() {
   return (
-    <section style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.black, position: "relative" }}>
+    <section style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.black, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
       <div style={{ padding: "0 6vw", maxWidth: 1200, margin: "0 auto" }}>
         <FadeIn>
@@ -1070,7 +1073,7 @@ function Vender() {
   const reveal = { hidden: { opacity: 0, y: 25 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease } } };
   const lineReveal = { hidden: { width: 0 }, visible: { width: 32, transition: { duration: 1.2, ease } } };
   return (
-    <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
+    <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden", isolation: "isolate" }}>
       <SmokeCanvas color={[0.60, 0.57, 0.50]} base={[0.96, 0.94, 0.90]} intensity={0.25} />
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder, zIndex: 1 }} />
       <motion.div
@@ -1159,7 +1162,7 @@ function Contacto() {
     }
   };
   return (
-    <section id="contacto" style={{ padding: "clamp(100px, 12vw, 180px) 6vw", background: C.blackDeep, position: "relative" }}>
+    <section id="contacto" style={{ padding: "clamp(100px, 12vw, 180px) 6vw", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "start" }}>
@@ -1343,8 +1346,8 @@ export default function JavierBoscoLanding() {
           body {
             background: #F5F2EB; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
           }
-          ::selection { background: rgba(160,140,91,0.12); color: #F5F2EB; }
-          ::placeholder { color: #706A62; font-style: italic; }
+          ::selection { background: rgba(160,140,91,0.3); color: #030303; }
+          ::placeholder { color: #585249; font-style: italic; }
           html.lenis, html.lenis body { height: auto; }
           .lenis.lenis-smooth { scroll-behavior: auto !important; }
           @keyframes scrollDown { 0% { transform: translateY(-16px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(32px); opacity: 0; } }
