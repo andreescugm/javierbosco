@@ -2,7 +2,7 @@
 
 ## CONTEXTO DE NEGOCIO
 
-Javier Bosco es broker inmobiliario off-market en Madrid. No aparece en portales. No busca clientes, los clientes le buscan a él. Opera en el rango de 7M€ a 120M€: solares estratégicos, edificios completos (como los del Viso), hoteles y cadenas hoteleras. Más de 300 operaciones cerradas en 5+ años. Discreción absoluta.
+Javier Bosco es broker inmobiliario off-market en Madrid. No aparece en portales. No busca clientes, los clientes le buscan a él. Opera en el rango de 1M€ a 200M€: solares estratégicos, edificios completos (como los del Viso), hoteles y cadenas hoteleras, residencial de lujo y activos singulares. También yates y aviación privada bajo cita. Discreción absoluta.
 
 Tagline: "Off-market. On-point."
 
@@ -19,128 +19,47 @@ El visitante de esta web gestiona un patrimonio de 8-9 cifras. No le impresionan
 
 La web NO vende. La web FILTRA. Solo los que entienden este mundo se sienten cómodos aquí. El resto se va. Eso es correcto.
 
-## IDENTIDAD VISUAL
+## ESTADO REAL DE LA WEB (fuente de verdad — actualizado 30/09/2026)
 
-### Paleta de color
-- Negro obsidiana (fondo principal): #050505
-- Negro profundo (fondos secundarios/cards): #0A0A0A
-- Negro elevado (bordes sutiles, separadores): #141414
-- Oro real apagado (acentos, highlights): #A08C5B
-- Oro hover (interacciones): #BFA36D
-- Blanco roto (texto principal): #E8E4DD
-- Gris ceniza (texto secundario): #6B6560
-- Gris humo (texto terciario/placeholders): #3A3632
+La web está en **modo claro** (crema + oro apagado). La versión oscura "obsidiana" se descartó. No reconvertir a oscuro salvo que se pida explícitamente.
 
-REGLA: El oro NUNCA es brillante, NUNCA es #FFD700. Es apagado, mate, como oro envejecido en una caja fuerte suiza. Se usa con extrema moderación — solo en detalles que merecen atención: una línea, un número, un borde activo.
+### Datos de negocio que se muestran
+- Rango de operaciones: **1M€ – 200M€** (único en toda la web: texto de La firma, FAQ y slider del buscador).
+- NO publicar cifras de track record (nº de operaciones, años, mayor operación) salvo que el cliente las confirme por escrito.
+- Email público: javierbosco@javierbosco.com (Zoho). El formulario envía a **javierboscointerno@gmail.com** vía FormSubmit (constantes en `src/legal.tsx`).
 
-### Tipografía
-- Headings: Playfair Display (serif). Weight 400-700. Tracking ligeramente expandido (+0.02em). Tamaños generosos: hero 72-96px, secciones 48-56px.
-- Body/Labels: Lora (serif) para párrafos elegantes. Weight 300-400.
-- Elementos UI/Micro-copy: Inter o similar sans-serif limpia. Weight 300. Uppercase con tracking amplio (+0.15em) para labels y categorías.
-- Line-height generoso siempre: 1.4 para headings, 1.8 para body.
+### Paleta (constante `C` en `src/App.tsx`; ojo: "black" = fondo claro, "white" = texto oscuro)
+- Fondo crema: #F5F2EB · Fondo secundario: #EAE7E0 · Líneas: #D5D0C8
+- Texto: #030303 · Texto secundario: #585249 / #504B44
+- Oro: #A08C5B (acentos, cursivas de titulares) · Oro texto sobre claro: #6B5A2E · Oro hover: #BFA36D
 
-### Espaciado — Proporciones Áureas
-- Padding vertical entre secciones: mínimo 160px, ideal 200px.
-- Padding horizontal: mínimo 80px en desktop, 24px en mobile.
-- Espacio entre elementos dentro de sección: seguir ratio 1:1.618.
-- El espacio vacío ES el diseño. Si algo parece lleno, necesita más aire.
-- Cada elemento debe respirar. Si dos cosas están cerca, pregúntate si deberían estarlo.
+### Tipografía (autoalojada con @fontsource, sin Google Fonts)
+- Titulares: Playfair Display 400/500 (+ cursiva)
+- Texto: Cormorant Garamond 400/500 (+ cursiva) — no usar 300, se lee mal
+- UI / etiquetas: Inter 400/500, mayúsculas con tracking amplio
 
-REGLA: El lujo se comunica con lo que NO hay, no con lo que hay. Blackspace es tu herramienta principal.
-
-## DIRECCIÓN ARTÍSTICA — SIN CITY + BOND + OBSIDIANA
-
-### Atmósfera general
-La web se siente como entrar en una sala privada a oscuras donde alguien muy poderoso te está esperando. No ves todo de golpe. Las cosas aparecen. Se revelan. Como si la web decidiera mostrarte las cosas solo cuando estás listo.
-
-### Transiciones y animaciones (Framer Motion)
-- Filosofía: medio tech, medio fantasma. Las cosas no "entran" — se materializan.
-- Velocidad: lenta y deliberada. Duration mínima 0.8s, ideal 1-1.2s para reveals.
-- Easing: [0.25, 0.1, 0.25, 1] — movimiento con peso, no rebote.
-- Entrada de texto: fade-in + translate-y sutil (20px máximo). Staggered entre líneas (0.15s delay).
-- Entrada de bloques: opacity 0→1 con scale muy sutil (0.98→1). Nada de slides agresivos.
-- Líneas decorativas: se dibujan (width 0→100%) con delay.
-- Números/stats: counter animation suave, no instantánea.
-- TODAS las animaciones deben activarse con whileInView, NO solo una vez. Al hacer scroll arriba y abajo, los elementos siempre se animan al reaparecer.
-- viewport amount: 0.3 (se activa cuando el 30% del elemento es visible).
-
-REGLA: Si una animación llama la atención sobre sí misma, es demasiado. El visitante debe sentir que algo pasó, no saber exactamente qué.
-
-### Efectos visuales
-- Sombras: solo sutiles, difusas, oscuras. box-shadow con negro y spread amplio. Nunca sombras duras o claras.
-- Gradientes: solo oscuros, de #050505 a #0A0A0A o a transparente. Para crear profundidad, no decoración.
-- Líneas: finas (1px), en #141414 o en oro #A08C5B para emphasis. Horizontales preferentemente.
-- Hover states: transiciones lentas (0.5s). Cambios sutiles de opacidad o color. El oro aparece en hover como un susurro.
-- Sin bordes redondeados excesivos. Border-radius máximo 2-4px. El lujo tiene ángulos.
-- Sin box-shadows coloridos. Sin glows. Sin neon. Sin glassmorphism.
+### Animación
+- Framer Motion, easing [0.25, 0.1, 0.25, 1], reveals de ~1s, `viewport={{ once: true, amount: 0.15 }}`.
+- Scroll suave con Lenis. Para navegar a una sección usar `scrollToId()`; no confiar en anclas nativas.
+- El humo WebGL existe SOLO en el hero. No añadirlo a otras secciones.
 
 ### Imágenes
-- Si se usan: en blanco y negro o con desaturación extrema.
-- Overlays oscuros pesados (80-90% opacidad) sobre cualquier imagen.
-- Las imágenes son textura de fondo, nunca el protagonista.
+- Todas autoalojadas en `public/img/*.webp` (sin hotlinks a Unsplash). Cada foto de destino debe ser de ESA ciudad.
+- Destinos, tipologías y extra: fotos de Unsplash (licencia libre). Propiedades: fotos propias.
+- `prop-plazamayor.webp` viene de un original de 474px: sustituir por una foto de más resolución en cuanto la haya.
 
-## SECCIONES DE LA LANDING
-
-### 1. Hero (100vh)
-- Fondo negro obsidiana total, quizás con textura arquitectónica apenas perceptible.
-- "JAVIER BOSCO" grande, Playfair Display, tracking expandido.
-- Debajo: "Off-market. On-point." en oro apagado, más pequeño.
-- Subtexto: "Las propiedades que valen de verdad no están en ningún portal." en gris ceniza.
-- CTA: "Solicitar Acceso" — borde oro fino, fondo transparente, hover rellena oro sutil.
-- Indicador de scroll animado en la parte inferior (línea fina que pulsa).
-- Todo aparece staggered: primero el nombre, luego tagline, luego subtexto, luego CTA.
-
-### 2. Sobre Javier / Filosofía
-- Texto breve y contundente sobre quién es y por qué opera en off-market.
-- Tono: no es una bio, es una declaración. "No trabajo con portales. Trabajo con confianza."
-- Estructura limpia: texto a un lado, quizás un dato destacado al otro.
-- Sin foto a menos que sea de muy alta calidad y tratada en B&W.
-
-### 3. Track Record / Números
-- Grid de 3-4 stats grandes: "+300 Operaciones", "5+ Años", "120M€ Mayor operación", "7-120M€ Rango".
-- Números en oro apagado, Playfair Display, gran tamaño.
-- Labels en Inter uppercase, gris ceniza, tracking amplio.
-- Counter animation al entrar en viewport.
-- Separadores finos entre celdas.
-
-### 4. Servicios / Qué hace
-- Máximo 3-4 servicios. Compra off-market, venta discrecional, advisory, gestión de activos singulares.
-- Sin iconos genéricos. Si hay iconos, que sean líneas finas custom.
-- Cada servicio: título + una frase. Nada más. Si necesitas más texto, sobra texto.
-
-### 5. Contacto / Acceso
-- Mínimo: email o formulario de una línea. "Nombre. Operación. Rango."
-- Nada de formularios largos. Si alguien tiene que rellenar 8 campos, no es el cliente correcto.
-- CTA final: "Hablemos" o "Solicitar Acceso". Oro, discreto.
-- Quizás un número de teléfono en texto fino.
-
-## STACK TÉCNICO
-- React + TypeScript + Vite
-- Tailwind CSS v4
-- Framer Motion para todas las animaciones
-- Google Fonts: Playfair Display, Lora, Inter
-- Mobile-first responsive
-
-## REGLAS ABSOLUTAS
-
-1. NUNCA uses colores brillantes, neón, gradientes coloridos o efectos que parezcan startup tech.
-2. NUNCA uses border-radius mayores a 4px.
-3. NUNCA apelotones contenido. Si dudas, añade más espacio.
-4. NUNCA uses lenguaje de venta agresivo. Nada de "¡Descubre!", "¡No te pierdas!", exclamaciones.
-5. NUNCA uses stock photos reconocibles o imágenes de baja calidad.
-6. NUNCA uses más de 3 niveles de jerarquía tipográfica por sección.
-7. SIEMPRE activa animaciones con whileInView, nunca one-time.
-8. SIEMPRE usa transiciones lentas (mínimo 0.5s para hovers, 0.8s para reveals).
-9. SIEMPRE prioriza el espacio vacío sobre el contenido.
-10. SIEMPRE mantén la coherencia visual: misma paleta, mismas fuentes, mismas sombras en TODA la landing.
+### Estructura
+- `src/App.tsx`: todas las secciones (Hero, Activos, Tipologías, Extra yates/aviones, Destinos, La firma, Vender, Contacto, FAQ, Footer, modal legal).
+- `src/i18n.ts`: TODO el texto visible en 9 idiomas (es, en, fr, de, it, pt, ru, ar, zh). Nada de texto fijo en los componentes.
+- `src/legal.tsx`: aviso legal, privacidad y cookies + datos del titular (`TITULAR`, rellenar NIF/domicilio).
+- `src/components/CardStack.tsx`: carrusel de destinos.
+- Despliegue: GitHub Pages sirviendo `/docs` (dominio javierbosco.com, `CNAME`). La Action reconstruye `docs/` en cada push a `main`.
 
 ## TONO DE COMUNICACIÓN
 
-- Frases cortas. Directas. Sin adornos.
-- Tercera persona o impersonal. Nunca "¡Contacta conmigo!"
-- El visitante es inteligente. No le expliques lo obvio.
-- Menos es más. Si puedes decirlo en 5 palabras, no uses 10.
-- Inspira confianza con brevedad, no con cantidad.
+- Frases cortas. Directas. Sin adornos. Sin exclamaciones ni lenguaje de venta agresivo.
+- Tercera persona o impersonal. El visitante es inteligente: no explicar lo obvio.
+- La web no vende, filtra.
 
 ## REGLAS DE EJECUCIÓN PARA CLAUDE CODE
 
@@ -169,3 +88,9 @@ REGLA: Si una animación llama la atención sobre sí misma, es demasiado. El vi
 - Si algo "funciona pero no impresiona", no funciona.
 - Nunca uses valores por defecto de Tailwind sin personalizarlos. Los defaults son genéricos por definición.
 - Revisa spacing, font-sizes, colors y animations contra las specs de este documento antes de entregar.
+
+### Verificación obligatoria antes de hacer push
+1. `npx tsc -b` y `npm run lint` sin errores.
+2. `npm run build` (genera `docs/` con CNAME y .nojekyll).
+3. Probar en local (`npm run preview`) escritorio y móvil (390px): menú móvil, formulario, FAQ, modales legales, cambio de idioma.
+4. Tras el push, esperar a la Action "Deploy to GitHub Pages" y comprobar https://javierbosco.com (hard refresh) y que el JS de `docs/index.html` coincide con el publicado.

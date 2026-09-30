@@ -89,10 +89,12 @@ export function CardStack<T extends CardStackItem>({
     setActive((a) => wrapIndex(a, len));
   }, [len]);
 
+  const onChangeRef = React.useRef(onChangeIndex);
+  React.useEffect(() => { onChangeRef.current = onChangeIndex; });
   React.useEffect(() => {
     if (!len) return;
-    onChangeIndex?.(active, items[active]!);
-  }, [active]);
+    onChangeRef.current?.(active, items[active]!);
+  }, [active, items, len]);
 
   const maxOffset = Math.max(0, Math.floor(maxVisible / 2));
   const cardSpacing = Math.max(10, Math.round(cardWidth * (1 - overlap)));
@@ -178,7 +180,7 @@ export function CardStack<T extends CardStackItem>({
                     dragConstraints: { left: 0, right: 0 },
                     dragElastic: 0.18,
                     onDragEnd: (
-                      _e: any,
+                      _e: unknown,
                       info: { offset: { x: number }; velocity: { x: number } },
                     ) => {
                       if (reduceMotion) return;

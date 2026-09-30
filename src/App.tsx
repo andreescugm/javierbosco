@@ -1,9 +1,15 @@
-import { useState, useEffect, useRef, ReactNode, createContext, useContext } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { Search, MapPin, Home } from "lucide-react";
+import { useState, useEffect, useRef, createContext, useContext, useCallback, type ReactNode, type FormEvent } from "react";
+import { motion, AnimatePresence, useScroll, useTransform, type Variants } from "framer-motion";
+import { Search, MapPin, Home, Plus, Minus, X, Menu } from "lucide-react";
 import Lenis from "lenis";
 import { CardStack } from "./components/CardStack";
+import { T, LANG_OPTIONS, isLang, type Lang, type Dict, type AssetKey, type DestKey } from "./i18n";
+import { LEGAL, EMAIL_PUBLICO, EMAIL_FORMULARIO, type LegalKey } from "./legal";
 
+// ============================================
+// PALETA — web en modo claro (crema + oro apagado).
+// Nota: los nombres "black"/"white" son históricos: black = fondo claro, white = texto oscuro.
+// ============================================
 const C = {
   gold: "#A08C5B",
   goldText: "#6B5A2E",
@@ -13,276 +19,61 @@ const C = {
   black: "#F5F2EB",
   blackDeep: "#EAE7E0",
   blackBorder: "#D5D0C8",
-  blackBorderHover: "#C5BFB7",
   white: "#030303",
   whiteDim: "#C8C2B8",
   grey: "#585249",
   greyDark: "#504B44",
-  greySmoke: "#3E3A35",
 };
 
 const HEADING = "'Playfair Display', 'Georgia', serif";
 const BODY = "'Cormorant Garamond', 'Georgia', serif";
 const UI = "'Inter', 'Helvetica Neue', sans-serif";
+const ease = [0.25, 0.1, 0.25, 1] as const;
+const easeOut = [0.16, 1, 0.3, 1] as const;
+const VP = { once: true, amount: 0.15 } as const;
+
+// Rango de inversión: único para toda la web (1M€ – 200M€).
+const RANGES = ["1–5M€", "5–10M€", "10–20M€", "20–50M€", "50–100M€", "100–200M€"];
 
 // ============================================
-// TRANSLATIONS
+// CONTEXTOS: idioma + solicitud (lo que el visitante elige en el buscador / vender)
 // ============================================
-type TKeys = {
-  tagline: string; nav_destinos: string; nav_activos: string; nav_vender: string;
-  nav_contacto: string; nav_call: string; section_activos: string; section_destinos: string;
-  section_tipologias: string; section_vender: string; section_contacto: string;
-  h_activos: string; h_destinos: string; h_destinos_local: string;
-  h_tipologias: string; h_tipologias_em: string;
-  h_vender: string; h_vender_em: string; h_contacto: string; h_contacto_em: string;
-  label_nombre: string; label_email: string; label_telefono: string;
-  btn_enviar: string; btn_valoracion: string; btn_firma: string; btn_acceder: string;
-  hero_sub: string; hero_search: string; hero_explore: string;
-  search_ubicacion: string; search_tipo: string; search_rango: string; search_placeholder: string;
-  footer_desc: string; vender_desc: string; vender_placeholder: string;
-  about_text: string; contacto_desc: string; scroll: string;
-};
+const LangContext = createContext<Lang>("es");
+function useT(): Dict { return T[useContext(LangContext)]; }
 
-const T: Record<string, TKeys> = {
-  es: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Destinos", nav_activos: "Activos", nav_vender: "Vender",
-    nav_contacto: "Contacto", nav_call: "+34 · Contactar",
-    section_activos: "Selección actual", section_destinos: "Destinos",
-    section_tipologias: "Tipologías", section_vender: "Vender", section_contacto: "Iniciar conversación",
-    h_activos: "Activos Destacados",
-    h_destinos: "Presencia global,", h_destinos_local: "cierre local",
-    h_tipologias: "Qué", h_tipologias_em: "gestionamos",
-    h_vender: "Su activo", h_vender_em: "merece discreción",
-    h_contacto: "El primer paso es", h_contacto_em: "una llamada",
-    label_nombre: "Nombre", label_email: "Email", label_telefono: "Teléfono",
-    btn_enviar: "Enviar solicitud", btn_valoracion: "Solicitar valoración",
-    btn_firma: "Conocer la firma", btn_acceder: "Acceder",
-    hero_sub: "Off-Market Real Estate · Madrid · International",
-    hero_search: "¿Qué tipo de operación busca?", hero_explore: "Explorar",
-    search_ubicacion: "Ubicación", search_tipo: "Tipo de activo",
-    search_rango: "Rango de inversión", search_placeholder: "Madrid, España, Europa…",
-    footer_desc: "Intermediación en operaciones inmobiliarias off-market de alto valor. Madrid, España e internacional.",
-    vender_desc: "Valoración profesional y comercialización privada. Sin anuncios, sin portales, sin exposición pública. Solo compradores cualificados bajo acuerdo de confidencialidad.",
-    vender_placeholder: "Dirección o zona del activo",
-    about_text: "Edificios completos, hoteles, residencial de lujo, terrenos estratégicos y activos singulares. Acceso directo a oportunidades que se mueven entre profesionales antes de existir en ningún portal público.",
-    contacto_desc: "Cada solicitud se revisa personalmente. Si el perfil encaja con alguna operación en curso o en desarrollo, el contacto posterior es directo.",
-    scroll: "Scroll",
-  },
-  en: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Locations", nav_activos: "Assets", nav_vender: "Sell",
-    nav_contacto: "Contact", nav_call: "+34 · Contact",
-    section_activos: "Current Selection", section_destinos: "Locations",
-    section_tipologias: "Categories", section_vender: "Sell", section_contacto: "Start a Conversation",
-    h_activos: "Featured Assets",
-    h_destinos: "Global reach,", h_destinos_local: "local close",
-    h_tipologias: "What we", h_tipologias_em: "manage",
-    h_vender: "Your asset", h_vender_em: "deserves discretion",
-    h_contacto: "The first step is", h_contacto_em: "a call",
-    label_nombre: "Name", label_email: "Email", label_telefono: "Phone",
-    btn_enviar: "Send request", btn_valoracion: "Request valuation",
-    btn_firma: "About the firm", btn_acceder: "Access",
-    hero_sub: "Off-Market Real Estate · Madrid · International",
-    hero_search: "What type of transaction are you looking for?", hero_explore: "Explore",
-    search_ubicacion: "Location", search_tipo: "Asset type",
-    search_rango: "Investment range", search_placeholder: "Madrid, Spain, Europe…",
-    footer_desc: "Intermediary for high-value off-market real estate. Madrid, Spain & international.",
-    vender_desc: "Professional valuation and private marketing. No listings, no portals, no public exposure. Qualified buyers only under NDA.",
-    vender_placeholder: "Property address or area",
-    about_text: "Full buildings, hotels, luxury residential, strategic land and singular assets. Direct access to opportunities that move between professionals before appearing on any public portal.",
-    contacto_desc: "Each request is reviewed personally. If the profile matches an ongoing or developing transaction, direct contact follows.",
-    scroll: "Scroll",
-  },
-  fr: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Destinations", nav_activos: "Actifs", nav_vender: "Vendre",
-    nav_contacto: "Contact", nav_call: "+34 · Contacter",
-    section_activos: "Sélection actuelle", section_destinos: "Destinations",
-    section_tipologias: "Typologies", section_vender: "Vendre", section_contacto: "Initier une conversation",
-    h_activos: "Actifs en vedette",
-    h_destinos: "Présence mondiale,", h_destinos_local: "closing local",
-    h_tipologias: "Ce que nous", h_tipologias_em: "gérons",
-    h_vender: "Votre actif", h_vender_em: "mérite la discrétion",
-    h_contacto: "La première étape est", h_contacto_em: "un appel",
-    label_nombre: "Nom", label_email: "Email", label_telefono: "Téléphone",
-    btn_enviar: "Envoyer la demande", btn_valoracion: "Demander une évaluation",
-    btn_firma: "La firme", btn_acceder: "Accéder",
-    hero_sub: "Immobilier Off-Market · Madrid · International",
-    hero_search: "Quel type d'opération recherchez-vous?", hero_explore: "Explorer",
-    search_ubicacion: "Emplacement", search_tipo: "Type d'actif",
-    search_rango: "Tranche d'investissement", search_placeholder: "Madrid, Espagne, Europe…",
-    footer_desc: "Intermédiaire en opérations immobilières off-market de haute valeur. Madrid, Espagne & international.",
-    vender_desc: "Évaluation professionnelle et commercialisation privée. Sans annonces, sans portails, sans exposition publique.",
-    vender_placeholder: "Adresse ou zone de l'actif",
-    about_text: "Immeubles complets, hôtels, résidentiel de luxe, terrains stratégiques et actifs singuliers. Accès direct à des opportunités qui circulent entre professionnels.",
-    contacto_desc: "Chaque demande est examinée personnellement. Si le profil correspond à une opération en cours, le contact est direct.",
-    scroll: "Défiler",
-  },
-  de: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Standorte", nav_activos: "Objekte", nav_vender: "Verkaufen",
-    nav_contacto: "Kontakt", nav_call: "+34 · Kontakt",
-    section_activos: "Aktuelle Auswahl", section_destinos: "Standorte",
-    section_tipologias: "Kategorien", section_vender: "Verkaufen", section_contacto: "Gespräch beginnen",
-    h_activos: "Ausgewählte Objekte",
-    h_destinos: "Globale Präsenz,", h_destinos_local: "lokaler Abschluss",
-    h_tipologias: "Was wir", h_tipologias_em: "verwalten",
-    h_vender: "Ihr Objekt", h_vender_em: "verdient Diskretion",
-    h_contacto: "Der erste Schritt ist", h_contacto_em: "ein Anruf",
-    label_nombre: "Name", label_email: "E-Mail", label_telefono: "Telefon",
-    btn_enviar: "Anfrage senden", btn_valoracion: "Bewertung anfragen",
-    btn_firma: "Über uns", btn_acceder: "Zugriff",
-    hero_sub: "Off-Market Immobilien · Madrid · International",
-    hero_search: "Welche Art von Transaktion suchen Sie?", hero_explore: "Erkunden",
-    search_ubicacion: "Standort", search_tipo: "Objekttyp",
-    search_rango: "Investitionsrahmen", search_placeholder: "Madrid, Spanien, Europa…",
-    footer_desc: "Vermittlung hochwertiger Off-Market-Immobilien. Madrid, Spanien & international.",
-    vender_desc: "Professionelle Bewertung und private Vermarktung. Keine Anzeigen, keine Portale, keine öffentliche Exposition.",
-    vender_placeholder: "Adresse oder Zone des Objekts",
-    about_text: "Komplette Gebäude, Hotels, Luxuswohnimmobilien, strategische Grundstücke und besondere Vermögenswerte. Direktzugang zu Möglichkeiten, die sich unter Fachleuten bewegen.",
-    contacto_desc: "Jede Anfrage wird persönlich geprüft. Wenn das Profil zu einer laufenden Transaktion passt, folgt direkter Kontakt.",
-    scroll: "Scrollen",
-  },
-  it: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Destinazioni", nav_activos: "Attivi", nav_vender: "Vendere",
-    nav_contacto: "Contatto", nav_call: "+34 · Contattare",
-    section_activos: "Selezione attuale", section_destinos: "Destinazioni",
-    section_tipologias: "Tipologie", section_vender: "Vendere", section_contacto: "Iniziare una conversazione",
-    h_activos: "Attivi in evidenza",
-    h_destinos: "Presenza globale,", h_destinos_local: "chiusura locale",
-    h_tipologias: "Cosa", h_tipologias_em: "gestiamo",
-    h_vender: "Il suo attivo", h_vender_em: "merita discrezione",
-    h_contacto: "Il primo passo è", h_contacto_em: "una chiamata",
-    label_nombre: "Nome", label_email: "Email", label_telefono: "Telefono",
-    btn_enviar: "Invia richiesta", btn_valoracion: "Richiedi valutazione",
-    btn_firma: "La firma", btn_acceder: "Accedere",
-    hero_sub: "Immobiliare Off-Market · Madrid · Internazionale",
-    hero_search: "Che tipo di operazione sta cercando?", hero_explore: "Esplorare",
-    search_ubicacion: "Posizione", search_tipo: "Tipo di attivo",
-    search_rango: "Range di investimento", search_placeholder: "Madrid, Spagna, Europa…",
-    footer_desc: "Intermediazione in operazioni immobiliari off-market di alto valore. Madrid, Spagna e internazionale.",
-    vender_desc: "Valutazione professionale e commercializzazione privata. Senza annunci, senza portali, senza esposizione pubblica.",
-    vender_placeholder: "Indirizzo o zona dell'attivo",
-    about_text: "Edifici completi, hotel, residenziale di lusso, terreni strategici e attivi singolari. Accesso diretto a opportunità che circolano tra professionisti.",
-    contacto_desc: "Ogni richiesta viene esaminata personalmente. Se il profilo corrisponde a un'operazione in corso, il contatto è diretto.",
-    scroll: "Scorri",
-  },
-  pt: {
-    tagline: "Off-market. On-point.",
-    nav_destinos: "Destinos", nav_activos: "Ativos", nav_vender: "Vender",
-    nav_contacto: "Contato", nav_call: "+34 · Contatar",
-    section_activos: "Seleção atual", section_destinos: "Destinos",
-    section_tipologias: "Tipologias", section_vender: "Vender", section_contacto: "Iniciar conversa",
-    h_activos: "Ativos em destaque",
-    h_destinos: "Presença global,", h_destinos_local: "fecho local",
-    h_tipologias: "O que", h_tipologias_em: "gerimos",
-    h_vender: "O seu ativo", h_vender_em: "merece discrição",
-    h_contacto: "O primeiro passo é", h_contacto_em: "uma chamada",
-    label_nombre: "Nome", label_email: "Email", label_telefono: "Telefone",
-    btn_enviar: "Enviar pedido", btn_valoracion: "Solicitar avaliação",
-    btn_firma: "A firma", btn_acceder: "Aceder",
-    hero_sub: "Imobiliário Off-Market · Madrid · Internacional",
-    hero_search: "Que tipo de operação procura?", hero_explore: "Explorar",
-    search_ubicacion: "Localização", search_tipo: "Tipo de ativo",
-    search_rango: "Gama de investimento", search_placeholder: "Madrid, Espanha, Europa…",
-    footer_desc: "Intermediação em operações imobiliárias off-market de alto valor. Madrid, Espanha e internacional.",
-    vender_desc: "Avaliação profissional e comercialização privada. Sem anúncios, sem portais, sem exposição pública.",
-    vender_placeholder: "Morada ou zona do ativo",
-    about_text: "Edifícios completos, hotéis, residencial de luxo, terrenos estratégicos e ativos singulares. Acesso direto a oportunidades que circulam entre profissionais.",
-    contacto_desc: "Cada pedido é revisto pessoalmente. Se o perfil corresponder a uma operação em curso, o contacto é direto.",
-    scroll: "Rolar",
-  },
-  ru: {
-    tagline: "Вне рынка. В точку.",
-    nav_destinos: "Направления", nav_activos: "Активы", nav_vender: "Продать",
-    nav_contacto: "Контакт", nav_call: "+34 · Связаться",
-    section_activos: "Текущий выбор", section_destinos: "Направления",
-    section_tipologias: "Категории", section_vender: "Продать", section_contacto: "Начать разговор",
-    h_activos: "Избранные активы",
-    h_destinos: "Глобальное присутствие,", h_destinos_local: "локальное закрытие",
-    h_tipologias: "Чем мы", h_tipologias_em: "управляем",
-    h_vender: "Ваш актив", h_vender_em: "заслуживает конфиденциальности",
-    h_contacto: "Первый шаг —", h_contacto_em: "звонок",
-    label_nombre: "Имя", label_email: "Email", label_telefono: "Телефон",
-    btn_enviar: "Отправить запрос", btn_valoracion: "Запросить оценку",
-    btn_firma: "О компании", btn_acceder: "Войти",
-    hero_sub: "Внерыночная недвижимость · Мадрид · Международный",
-    hero_search: "Какой тип операции вас интересует?", hero_explore: "Изучить",
-    search_ubicacion: "Местоположение", search_tipo: "Тип актива",
-    search_rango: "Диапазон инвестиций", search_placeholder: "Мадрид, Испания, Европа…",
-    footer_desc: "Посредничество в высокоценных внерыночных сделках с недвижимостью. Мадрид, Испания и международный рынок.",
-    vender_desc: "Профессиональная оценка и приватная реализация. Без объявлений, без порталов, без публичной огласки.",
-    vender_placeholder: "Адрес или район объекта",
-    about_text: "Целые здания, отели, элитная жилая недвижимость, стратегические земельные участки. Прямой доступ к возможностям, которые передаются между профессионалами.",
-    contacto_desc: "Каждый запрос рассматривается лично. Если профиль соответствует текущей операции, контакт будет прямым.",
-    scroll: "Прокрутить",
-  },
-  ar: {
-    tagline: "خارج السوق. في الصميم.",
-    nav_destinos: "الوجهات", nav_activos: "الأصول", nav_vender: "البيع",
-    nav_contacto: "اتصل", nav_call: "+34 · اتصل",
-    section_activos: "الاختيار الحالي", section_destinos: "الوجهات",
-    section_tipologias: "الفئات", section_vender: "البيع", section_contacto: "ابدأ محادثة",
-    h_activos: "الأصول المميزة",
-    h_destinos: "حضور عالمي،", h_destinos_local: "إغلاق محلي",
-    h_tipologias: "ما", h_tipologias_em: "ندير",
-    h_vender: "أصلك", h_vender_em: "يستحق السرية",
-    h_contacto: "الخطوة الأولى هي", h_contacto_em: "مكالمة",
-    label_nombre: "الاسم", label_email: "البريد الإلكتروني", label_telefono: "الهاتف",
-    btn_enviar: "إرسال الطلب", btn_valoracion: "طلب تقييم",
-    btn_firma: "عن الشركة", btn_acceder: "دخول",
-    hero_sub: "عقارات خارج السوق · مدريد · دولي",
-    hero_search: "ما نوع الصفقة التي تبحث عنها؟", hero_explore: "استكشاف",
-    search_ubicacion: "الموقع", search_tipo: "نوع الأصل",
-    search_rango: "نطاق الاستثمار", search_placeholder: "مدريد، إسبانيا، أوروبا…",
-    footer_desc: "وساطة في عمليات العقارات خارج السوق عالية القيمة. مدريد، إسبانيا والسوق الدولي.",
-    vender_desc: "تقييم مهني وتسويق خاص. بدون إعلانات، بدون بوابات، بدون تعرض عام.",
-    vender_placeholder: "عنوان العقار أو المنطقة",
-    about_text: "مبانٍ كاملة، فنادق، سكنية فاخرة، أراضٍ استراتيجية وأصول فريدة. وصول مباشر إلى الفرص التي تتداول بين المحترفين.",
-    contacto_desc: "كل طلب يُراجع شخصياً. إذا توافق الملف مع عملية جارية، يكون التواصل مباشراً.",
-    scroll: "تمرير",
-  },
-  zh: {
-    tagline: "场外交易。精准到位。",
-    nav_destinos: "目的地", nav_activos: "资产", nav_vender: "出售",
-    nav_contacto: "联系", nav_call: "+34 · 联系",
-    section_activos: "当前精选", section_destinos: "目的地",
-    section_tipologias: "类别", section_vender: "出售", section_contacto: "开始对话",
-    h_activos: "精选资产",
-    h_destinos: "全球布局，", h_destinos_local: "本地成交",
-    h_tipologias: "我们", h_tipologias_em: "管理的",
-    h_vender: "您的资产", h_vender_em: "值得保密",
-    h_contacto: "第一步是", h_contacto_em: "一个电话",
-    label_nombre: "姓名", label_email: "电子邮件", label_telefono: "电话",
-    btn_enviar: "发送请求", btn_valoracion: "申请估值",
-    btn_firma: "关于我们", btn_acceder: "访问",
-    hero_sub: "场外房地产 · 马德里 · 国际",
-    hero_search: "您在寻找哪种类型的交易？", hero_explore: "探索",
-    search_ubicacion: "位置", search_tipo: "资产类型",
-    search_rango: "投资范围", search_placeholder: "马德里，西班牙，欧洲…",
-    footer_desc: "高价值场外房地产交易中介。马德里、西班牙及国际市场。",
-    vender_desc: "专业估值和私密营销。无广告，无门户网站，无公开曝光。",
-    vender_placeholder: "房产地址或区域",
-    about_text: "完整建筑、酒店、豪华住宅、战略用地和独特资产。直接获取在专业人士之间流通的机会。",
-    contacto_desc: "每个请求都经过个人审查。如果档案与正在进行的交易匹配，将直接联系。",
-    scroll: "滚动",
-  },
-};
+type Lead = { operacion: "comprar" | "vender"; ubicacion?: string; tipo?: AssetKey | ""; rango?: string; direccion?: string } | null;
+const LeadContext = createContext<{ lead: Lead; setLead: (l: Lead) => void }>({ lead: null, setLead: () => {} });
 
-const LangContext = createContext<string>("es");
-function useT() { return T[useContext(LangContext)] || T.es; }
+const LegalContext = createContext<(k: LegalKey) => void>(() => {});
 
 // ============================================
-// UTILITY: cn
+// SCROLL (Lenis)
 // ============================================
-function cn(...args: (string | undefined | false | null)[]) {
-  return args.filter(Boolean).join(" ");
+let lenisInstance: Lenis | null = null;
+const NAV_OFFSET = -72;
+function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (lenisInstance) lenisInstance.scrollTo(el, { offset: NAV_OFFSET });
+  else el.scrollIntoView({ behavior: "smooth" });
+}
+function scrollTop() {
+  if (lenisInstance) lenisInstance.scrollTo(0);
+  else window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function useViewportWidth() {
+  const [w, setW] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
+  useEffect(() => {
+    const h = () => setW(window.innerWidth);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  return w;
 }
 
 // ============================================
-// SMOKE SHADER (WebGL) — light-mode aware
+// HUMO (WebGL) — solo en el hero
 // ============================================
 const FRAG = `#version 300 es
 precision highp float;
@@ -290,7 +81,6 @@ out vec4 O;
 uniform float time;
 uniform vec2 resolution;
 uniform vec3 u_color;
-uniform vec3 u_base;
 uniform float u_intensity;
 #define FC gl_FragCoord.xy
 #define R resolution
@@ -314,11 +104,9 @@ void main(){
   O=vec4(col,1);
 }`;
 
-function SmokeCanvas({
-  color = [0.25, 0.22, 0.14] as [number, number, number],
-  base = [0.02, 0.02, 0.02] as [number, number, number],
-  intensity = 1.0,
-}) {
+const HERO_SMOKE = { color: [0.75, 0.72, 0.65], base: [0.96, 0.94, 0.9], intensity: 0.4 } as const;
+
+function SmokeCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current;
@@ -335,14 +123,13 @@ function SmokeCanvas({
     gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,1,-1,-1,1,1,1,-1]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 1, -1, -1, 1, 1, 1, -1]), gl.STATIC_DRAW);
     const pos = gl.getAttribLocation(prog, "position");
     gl.enableVertexAttribArray(pos);
     gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
     const uRes = gl.getUniformLocation(prog, "resolution");
     const uTime = gl.getUniformLocation(prog, "time");
     const uColor = gl.getUniformLocation(prog, "u_color");
-    const uBase = gl.getUniformLocation(prog, "u_base");
     const uInt = gl.getUniformLocation(prog, "u_intensity");
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio, 1.5);
@@ -352,96 +139,96 @@ function SmokeCanvas({
     };
     resize();
     window.addEventListener("resize", resize);
-    let raf: number;
+    // No renderizar cuando el hero no está en pantalla (ahorra batería/GPU)
+    let visible = true;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; });
+    io.observe(canvas);
+    let raf = 0;
+    const { color, base, intensity } = HERO_SMOKE;
     const loop = (now: number) => {
-      gl.clearColor(base[0], base[1], base[2], 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(prog);
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, now * 1e-3);
-      gl.uniform3fv(uColor, color);
-      gl.uniform3fv(uBase, base);
-      gl.uniform1f(uInt, intensity);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (visible) {
+        gl.clearColor(base[0], base[1], base[2], 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(prog);
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform1f(uTime, now * 1e-3);
+        gl.uniform3f(uColor, color[0], color[1], color[2]);
+        gl.uniform1f(uInt, intensity);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
-  }, [color, base, intensity]);
-  return <canvas ref={ref} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />;
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      io.disconnect();
+      gl.deleteProgram(prog); gl.deleteShader(vs); gl.deleteShader(fs); gl.deleteBuffer(buf);
+    };
+  }, []);
+  return <canvas ref={ref} aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />;
 }
 
 // ============================================
-// SHARED ANIMATION CONFIG
+// DRAG CAROUSEL — 1 elemento, swipe/arrastre
 // ============================================
-const ease = [0.25, 0.1, 0.25, 1] as const;
-const VP = { once: true, amount: 0.15 } as const;
-
-// ============================================
-// DRAG CAROUSEL — swipe/drag enabled, 1 item at a time
-// ============================================
-function DragCarousel({ items, renderItem }: { items: any[]; renderItem: (item: any) => ReactNode }) {
+const slideVariants: Variants = {
+  enter: (d: number) => ({ x: d * 200, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (d: number) => ({ x: -d * 200, opacity: 0 }),
+};
+function DragCarousel<I>({ items, renderItem, prevLabel, nextLabel }: { items: I[]; renderItem: (item: I, i: number) => ReactNode; prevLabel: string; nextLabel: string }) {
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const n = items.length;
   const go = (d: number) => { setDir(d); setIdx(i => (i + d + n) % n); };
-  const handleDragEnd = (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
-    if (info.offset.x < -50 || info.velocity.x < -400) go(1);
-    else if (info.offset.x > 50 || info.velocity.x > 400) go(-1);
-  };
   const btnBase = {
     background: "rgba(10,8,5,0.55)", border: `1px solid ${C.goldLine}`,
     borderRadius: "50%", width: 44, height: 44, cursor: "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    transition: "all 0.4s",
+    display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.4s",
   };
   return (
     <div style={{ position: "relative" }}>
       <div style={{ overflow: "hidden", touchAction: "pan-y" }}>
-        <AnimatePresence mode="wait" custom={dir}>
+        <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={idx}
             custom={dir}
-            initial={(d: number) => ({ x: d * 200, opacity: 0 })}
-            animate={{ x: 0, opacity: 1 }}
-            exit={(d: number) => ({ x: -d * 200, opacity: 0 })}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
             transition={{ duration: 0.6, ease }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.12}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -50 || info.velocity.x < -400) go(1);
+              else if (info.offset.x > 50 || info.velocity.x > 400) go(-1);
+            }}
             style={{ cursor: "grab" }}
-            whileTap={{ cursor: "grabbing" }}
           >
-            {renderItem(items[idx])}
+            {renderItem(items[idx], idx)}
           </motion.div>
         </AnimatePresence>
       </div>
-      {/* Arrows */}
-      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", justifyContent: "space-between", padding: "0 16px", pointerEvents: "none" }}>
-        <button type="button" aria-label="Previous" onClick={() => go(-1)}
-          style={{ ...btnBase, pointerEvents: "auto" }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <button type="button" aria-label="Next" onClick={() => go(1)}
-          style={{ ...btnBase, pointerEvents: "auto" }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
+      <div style={{ position: "absolute", top: "32%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", justifyContent: "space-between", padding: "0 16px", pointerEvents: "none" }}>
+        {[{ d: -1, label: prevLabel, path: "M15 18l-6-6 6-6" }, { d: 1, label: nextLabel, path: "M9 18l6-6-6-6" }].map(b => (
+          <button key={b.d} type="button" aria-label={b.label} onClick={() => go(b.d)}
+            style={{ ...btnBase, pointerEvents: "auto" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d={b.path} /></svg>
+          </button>
+        ))}
       </div>
-      {/* Dots */}
       <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 28 }}>
         {items.map((_, i) => (
-          <button key={i} onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i); }}
+          <button key={i} type="button" aria-label={`${i + 1} / ${n}`} onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i); }}
             style={{
               width: idx === i ? 24 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer",
-              background: idx === i ? C.gold : C.blackBorder,
-              transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)",
+              background: idx === i ? C.gold : C.blackBorder, transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)",
             }}
           />
         ))}
@@ -451,157 +238,189 @@ function DragCarousel({ items, renderItem }: { items: any[]; renderItem: (item: 
 }
 
 // ============================================
-// FADE-IN — Framer Motion whileInView (once: true)
+// FADE-IN
 // ============================================
 function FadeIn({ children, delay = 0, y = 30 }: { children: ReactNode; delay?: number; y?: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={VP}
-      transition={{ duration: 1, delay, ease }}
-    >
+    <motion.div initial={{ opacity: 0, y, scale: 0.98 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={VP} transition={{ duration: 1, delay, ease }}>
       {children}
     </motion.div>
   );
 }
 
-// ============================================
-// LANG OPTIONS
-// ============================================
-const LANG_OPTIONS = [
-  { code: "es", flag: "🇪🇸" }, { code: "en", flag: "🇬🇧" }, { code: "fr", flag: "🇫🇷" },
-  { code: "de", flag: "🇩🇪" }, { code: "it", flag: "🇮🇹" }, { code: "pt", flag: "🇵🇹" },
-  { code: "ru", flag: "🇷🇺" }, { code: "ar", flag: "🇸🇦" }, { code: "zh", flag: "🇨🇳" },
-];
+function Eyebrow({ children }: { children: ReactNode }) {
+  return <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{children}</span>;
+}
+function GoldRule() {
+  return <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />;
+}
+function SectionTopLine() {
+  return <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />;
+}
 
 // ============================================
-// NAV HEADER
+// NAV
 // ============================================
-function NavHeader({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
+function NavHeader({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   const t = useT();
   const [cursor, setCursor] = useState({ left: 0, width: 0, opacity: 0 });
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", h);
+    h();
+    window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
+  useEffect(() => {
+    if (menuOpen) lenisInstance?.stop(); else lenisInstance?.start();
+  }, [menuOpen]);
   const tabs = [
-    { label: t.nav_destinos, href: "#destinos" },
-    { label: t.nav_activos, href: "#activos" },
-    { label: t.nav_vender, href: "#vender" },
-    { label: t.nav_contacto, href: "#contacto" },
+    { label: t.nav.activos, id: "activos" },
+    { label: t.nav.destinos, id: "destinos" },
+    { label: t.nav.firma, id: "firma" },
+    { label: t.nav.vender, id: "vender" },
+    { label: t.nav.contacto, id: "contacto" },
   ];
   return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: scrolled ? "14px 4vw" : "24px 4vw",
-      background: scrolled ? "rgba(245,242,235,0.94)" : "transparent",
-      backdropFilter: scrolled ? "blur(24px) saturate(1.2)" : "none",
-      borderBottom: scrolled ? `1px solid ${C.blackBorder}` : "1px solid transparent",
-      transition: "all 0.7s cubic-bezier(0.25,0.1,0.25,1)",
-    }}>
-      <a href="#" style={{ fontFamily: HEADING, fontSize: 14, letterSpacing: "0.22em", color: C.white, textDecoration: "none", fontWeight: 400 }}>
-        JAVIER BOSCO
-      </a>
-      <ul style={{
-        position: "relative", display: "flex", listStyle: "none", margin: 0, padding: "4px",
-        borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "rgba(200,195,185,0.3)",
-      }} onMouseLeave={() => setCursor(p => ({ ...p, opacity: 0 }))}>
-        {tabs.map(t => <NavTab key={t.href} href={t.href} setCursor={setCursor}>{t.label}</NavTab>)}
-        <li style={{
-          position: "absolute", top: 4, height: "calc(100% - 8px)", borderRadius: 100, background: C.gold,
-          left: cursor.left, width: cursor.width, opacity: cursor.opacity,
-          transition: "all 0.35s cubic-bezier(0.25,0.1,0.25,1)", pointerEvents: "none", zIndex: 0,
-        }} />
-      </ul>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <select
-          value={lang}
-          onChange={(e) => setLang(e.target.value)}
-          style={{
-            background: "#F5F2EB", border: `1px solid ${C.blackBorder}`,
-            color: C.grey, fontFamily: UI, fontSize: 13, letterSpacing: "0.05em",
-            padding: "3px 6px", cursor: "pointer", borderRadius: 2, outline: "none",
-            transition: "border-color 0.4s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.gold)}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.blackBorder)}
-        >
-          {LANG_OPTIONS.map(l => <option key={l.code} value={l.code} style={{ background: "#F5F2EB" }}>{l.flag}</option>)}
-        </select>
-      </div>
-    </nav>
+    <>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+        display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16,
+        padding: scrolled ? "14px 4vw" : "24px 4vw",
+        background: scrolled || menuOpen ? "rgba(245,242,235,0.94)" : "transparent",
+        backdropFilter: scrolled ? "blur(24px) saturate(1.2)" : "none",
+        borderBottom: scrolled ? `1px solid ${C.blackBorder}` : "1px solid transparent",
+        transition: "all 0.7s cubic-bezier(0.25,0.1,0.25,1)",
+      }}>
+        <a href="#top" onClick={(e) => { e.preventDefault(); setMenuOpen(false); scrollTop(); }}
+          style={{ fontFamily: HEADING, fontSize: 14, letterSpacing: "0.22em", color: C.white, textDecoration: "none", fontWeight: 400, whiteSpace: "nowrap" }}>
+          JAVIER BOSCO
+        </a>
+        <ul className="nav-tabs" style={{
+          position: "relative", display: "flex", listStyle: "none", margin: 0, padding: "4px",
+          borderRadius: 100, border: `1px solid ${C.blackBorder}`, background: "rgba(200,195,185,0.3)",
+        }} onMouseLeave={() => setCursor(p => ({ ...p, opacity: 0 }))}>
+          {tabs.map(tab => <NavTab key={tab.id} id={tab.id} setCursor={setCursor}>{tab.label}</NavTab>)}
+          <li aria-hidden="true" style={{
+            position: "absolute", top: 4, height: "calc(100% - 8px)", borderRadius: 100, background: C.gold,
+            left: cursor.left, width: cursor.width, opacity: cursor.opacity,
+            transition: "all 0.35s cubic-bezier(0.25,0.1,0.25,1)", pointerEvents: "none", zIndex: 0,
+          }} />
+        </ul>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <select
+            aria-label="Idioma / Language"
+            value={lang}
+            onChange={(e) => { if (isLang(e.target.value)) setLang(e.target.value); }}
+            style={{
+              background: "#F5F2EB", border: `1px solid ${C.blackBorder}`, color: C.grey, fontFamily: UI, fontSize: 13,
+              padding: "3px 6px", cursor: "pointer", borderRadius: 2, outline: "none", transition: "border-color 0.4s",
+            }}
+          >
+            {LANG_OPTIONS.map(l => <option key={l.code} value={l.code} title={l.label}>{l.flag}</option>)}
+          </select>
+          <button type="button" className="nav-burger" aria-label={menuOpen ? t.nav.cerrar : t.nav.menu} aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(o => !o)}
+            style={{ background: "transparent", border: `1px solid ${C.blackBorder}`, borderRadius: 2, width: 38, height: 32, alignItems: "center", justifyContent: "center", cursor: "pointer", color: C.white }}>
+            {menuOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
+        </div>
+      </nav>
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5, ease }}
+            style={{ position: "fixed", inset: 0, zIndex: 999, background: C.black, display: "flex", flexDirection: "column", justifyContent: "center", padding: "100px 8vw 60px" }}
+          >
+            {tabs.map((tab, i) => (
+              <motion.a key={tab.id} href={`#${tab.id}`}
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.08 * i, ease }}
+                onClick={(e) => { e.preventDefault(); setMenuOpen(false); setTimeout(() => scrollToId(tab.id), 50); }}
+                style={{ fontFamily: HEADING, fontSize: "clamp(30px, 8vw, 44px)", color: C.white, textDecoration: "none", padding: "12px 0", borderBottom: `1px solid ${C.blackBorder}` }}>
+                {tab.label}
+              </motion.a>
+            ))}
+            <div style={{ marginTop: 40, fontFamily: HEADING, fontStyle: "italic", color: C.gold, fontSize: 16 }}>{t.tagline}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
-function NavTab({ children, href, setCursor }: { children: ReactNode; href: string; setCursor: (c: any) => void }) {
+function NavTab({ children, id, setCursor }: { children: ReactNode; id: string; setCursor: (c: { left: number; width: number; opacity: number }) => void }) {
   const ref = useRef<HTMLLIElement>(null);
   return (
     <li ref={ref} onMouseEnter={() => {
       if (!ref.current) return;
-      const { width } = ref.current.getBoundingClientRect();
-      setCursor({ width, opacity: 1, left: ref.current.offsetLeft });
+      setCursor({ width: ref.current.getBoundingClientRect().width, opacity: 1, left: ref.current.offsetLeft });
     }} style={{ position: "relative", zIndex: 1 }}>
-      <a href={href} style={{
-        display: "block", padding: "10px 22px", fontFamily: UI, fontSize: 10, letterSpacing: "0.14em",
-        textTransform: "uppercase", color: C.white, textDecoration: "none", mixBlendMode: "difference",
-        cursor: "pointer", whiteSpace: "nowrap",
+      <a href={`#${id}`} onClick={(e) => { e.preventDefault(); scrollToId(id); }} style={{
+        display: "block", padding: "10px 20px", fontFamily: UI, fontSize: 10, letterSpacing: "0.14em",
+        textTransform: "uppercase", color: C.white, textDecoration: "none", mixBlendMode: "difference", whiteSpace: "nowrap",
       }}>{children}</a>
     </li>
   );
 }
 
 // ============================================
-// LIQUID GLASS BUTTON
+// BOTÓN
 // ============================================
-function LiquidButton({ children, href = "#", onClick, variant = "outline", size = "md", type }: {
-  children: ReactNode; href?: string; onClick?: () => void; variant?: "outline" | "solid"; size?: "sm" | "md" | "lg"; type?: "submit" | "button" | "reset";
+function LiquidButton({ children, href, onClick, variant = "outline", size = "md", type, disabled }: {
+  children: ReactNode; href?: string; onClick?: () => void; variant?: "outline" | "solid"; size?: "sm" | "md" | "lg";
+  type?: "submit" | "button"; disabled?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const Tag = (onClick || type ? "button" : "a") as any;
   const sizes = { sm: { padding: "12px 32px", fontSize: 9 }, md: { padding: "18px 52px", fontSize: 11 }, lg: { padding: "22px 64px", fontSize: 12 } };
   const isSolid = variant === "solid";
-  return (
-    <Tag href={(onClick || type) ? undefined : href} onClick={onClick} type={type}
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
-      onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)}
-      style={{
-        position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
-        padding: sizes[size].padding, fontFamily: UI, fontSize: sizes[size].fontSize, letterSpacing: "0.22em",
-        textTransform: "uppercase", textDecoration: "none", cursor: "pointer",
-        borderRadius: 100, overflow: "hidden",
-        color: isSolid ? (hover ? C.gold : C.black) : (hover ? C.black : C.gold),
-        border: `1px solid ${hover ? C.gold : C.goldLine}`,
-        background: isSolid ? (hover ? "transparent" : C.gold) : (hover ? C.gold : "transparent"),
-        transform: pressed ? "scale(0.97)" : "scale(1)",
-        boxShadow: hover ? `0 0 30px ${C.goldDim}, inset 0 1px 0 rgba(255,255,255,0.15)` : `inset 0 1px 0 rgba(255,255,255,0.05)`,
-        transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)", fontWeight: 500,
-      }}>
-      <span style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: hover ? "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(255,255,255,0.1) 100%)" : "none", pointerEvents: "none", transition: "all 0.5s" }} />
-      <span style={{ position: "relative", zIndex: 1 }}>{children}</span>
-    </Tag>
-  );
+  const style = {
+    position: "relative" as const, display: "inline-flex", alignItems: "center", justifyContent: "center",
+    padding: sizes[size].padding, fontFamily: UI, fontSize: sizes[size].fontSize, letterSpacing: "0.22em",
+    textTransform: "uppercase" as const, textDecoration: "none", cursor: disabled ? "wait" : "pointer",
+    borderRadius: 100, overflow: "hidden", opacity: disabled ? 0.6 : 1,
+    color: isSolid ? (hover ? C.gold : C.black) : (hover ? C.black : C.gold),
+    border: `1px solid ${hover ? C.gold : C.goldLine}`,
+    background: isSolid ? (hover ? "transparent" : C.gold) : (hover ? C.gold : "transparent"),
+    transform: pressed ? "scale(0.97)" : "scale(1)",
+    boxShadow: hover ? `0 0 30px ${C.goldDim}` : "none",
+    transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)", fontWeight: 500,
+  };
+  const handlers = {
+    onMouseEnter: () => setHover(true), onMouseLeave: () => { setHover(false); setPressed(false); },
+    onMouseDown: () => setPressed(true), onMouseUp: () => setPressed(false),
+  };
+  const inner = <span style={{ position: "relative", zIndex: 1 }}>{children}</span>;
+  if (href) {
+    return (
+      <a href={href} style={style} {...handlers}
+        onClick={(e) => {
+          if (onClick) onClick();
+          if (href.startsWith("#") && href.length > 1) { e.preventDefault(); scrollToId(href.slice(1)); }
+        }}>{inner}</a>
+    );
+  }
+  return <button type={type ?? "button"} onClick={onClick} disabled={disabled} style={style} {...handlers}>{inner}</button>;
 }
 
 // ============================================
-// INVESTMENT SLIDER
+// SLIDER DE INVERSIÓN
 // ============================================
-function InvestmentSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const ticks = ["<1M€","1-5M€","5-10M€","10-20M€","20-50M€","50-100M€","100M€+"];
+function InvestmentSlider({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+  const max = RANGES.length - 1;
   return (
     <div style={{ width: "100%" }}>
       <div style={{ position: "relative", height: 40, display: "flex", alignItems: "center" }}>
         <div style={{ position: "absolute", width: "100%", height: 3, background: C.blackBorder, borderRadius: 2 }} />
-        <div style={{ position: "absolute", width: `${(value / 6) * 100}%`, height: 3, background: C.gold, borderRadius: 2, transition: "width 0.05s linear" }} />
-        <input type="range" min={0} max={6} step={0.01} value={value} onChange={(e) => onChange(parseFloat(e.target.value))}
+        <div style={{ position: "absolute", width: `${(value / max) * 100}%`, height: 3, background: C.gold, borderRadius: 2 }} />
+        <input type="range" aria-label={label} aria-valuetext={RANGES[Math.round(value)]} min={0} max={max} step={0.01} value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          onPointerUp={() => onChange(Math.round(value))}
           style={{ position: "absolute", width: "100%", height: 40, appearance: "none", background: "transparent", cursor: "pointer", zIndex: 2, outline: "none" }} />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-        {ticks.map((label, i) => (
-          <span key={i} style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase", color: Math.round(value) >= i ? C.gold : C.greyDark, transition: "color 0.3s", textAlign: "center", flex: 1 }}>{label}</span>
+        {RANGES.map((r, i) => (
+          <span key={r} style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.06em", color: Math.round(value) === i ? C.goldText : C.greyDark, fontWeight: Math.round(value) === i ? 500 : 400, transition: "color 0.3s", textAlign: "center", flex: 1 }}>{r}</span>
         ))}
       </div>
     </div>
@@ -611,57 +430,59 @@ function InvestmentSlider({ value, onChange }: { value: number; onChange: (v: nu
 // ============================================
 // HERO
 // ============================================
+const heroContainer: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.18, delayChildren: 0.3 } } };
+const heroItem: Variants = { hidden: { opacity: 0, y: 35 }, visible: { opacity: 1, y: 0, transition: { duration: 1.4, ease: easeOut } } };
+
 function Hero() {
   const t = useT();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [sliderVal, setSliderVal] = useState(3);
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const smokeY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-
-  const container = { hidden: {}, visible: { transition: { staggerChildren: 0.18, delayChildren: 0.3 } } };
-  const item = { hidden: { opacity: 0, y: 35 }, visible: { opacity: 1, y: 0, transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] } } };
-
   return (
-    <section ref={heroRef} style={{ height: "100vh", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+    <section id="top" ref={heroRef} style={{ minHeight: "100svh", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "110px 0 90px" }}>
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
         <motion.div style={{ position: "absolute", inset: 0, y: smokeY }}>
-          <SmokeCanvas color={[0.75, 0.72, 0.65]} base={[0.96, 0.94, 0.90]} intensity={0.4} />
+          <SmokeCanvas />
         </motion.div>
       </div>
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255,255,255,0.65) 100%)", zIndex: 1 }} />
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}
-      >
-        <motion.div variants={item} style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32 }}>
+      <motion.div variants={heroContainer} initial="hidden" animate="visible"
+        style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px", maxWidth: 900, width: "100%" }}>
+        <motion.div variants={heroItem} style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.4em", color: C.greyDark, textTransform: "uppercase", marginBottom: 32 }}>
           {t.hero_sub}
         </motion.div>
-        <motion.div variants={item} style={{ marginBottom: 36 }}>
-          <img src="/logo.png" alt="Javier Bosco Properties"
-            style={{ maxWidth: "clamp(340px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 0 60px rgba(160,140,91,0.25))" }} />
-        </motion.div>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: 56 }}
-          transition={{ duration: 2, ease: [0.16, 1, 0.3, 1], delay: 1.2 }}
-          style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 32px" }}
-        />
-        <motion.div variants={item} style={{ fontFamily: HEADING, fontSize: "clamp(18px, 2.2vw, 26px)", color: C.gold, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 44 }}>
+        <motion.h1 variants={heroItem} style={{ marginBottom: 36 }}>
+          <img src="/img/logo.webp" alt="Javier Bosco Properties — Activos singulares" width={1000} height={682} fetchPriority="high"
+            style={{ width: "clamp(280px, 50vw, 580px)", height: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 0 60px rgba(160,140,91,0.2))" }} />
+        </motion.h1>
+        <motion.div initial={{ width: 0 }} animate={{ width: 56 }} transition={{ duration: 2, ease: easeOut, delay: 1.2 }}
+          style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "0 auto 32px" }} />
+        <motion.div variants={heroItem} style={{ fontFamily: HEADING, fontSize: "clamp(18px, 2.2vw, 26px)", color: C.goldText, letterSpacing: "0.1em", fontStyle: "italic", fontWeight: 400, marginBottom: 44 }}>
           {t.tagline}
         </motion.div>
-        <motion.div variants={item}>
-          <SearchPalette open={searchOpen} setOpen={setSearchOpen} sliderVal={sliderVal} setSliderVal={setSliderVal} />
+        <motion.div variants={heroItem}>
+          <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+            {!searchOpen ? (
+              <button type="button" onClick={() => setSearchOpen(true)} className="search-pill" style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "20px 28px",
+                background: "rgba(245,242,235,0.75)", backdropFilter: "blur(20px)", border: `1px solid ${C.goldLine}`, borderRadius: 100,
+                cursor: "pointer", transition: "all 0.5s", color: C.grey, fontFamily: BODY, fontSize: 17, letterSpacing: "0.03em", fontStyle: "italic",
+              }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.goldLine; }}>
+                <Search size={16} style={{ color: C.gold, flexShrink: 0 }} />
+                <span style={{ flex: 1, textAlign: "start" }}>{t.search.abrir}</span>
+                <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase", fontStyle: "normal" }}>{t.search.explorar}</span>
+              </button>
+            ) : (
+              <SearchExpanded close={() => setSearchOpen(false)} />
+            )}
+          </div>
         </motion.div>
       </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 3, duration: 1.5 }}
-        style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} transition={{ delay: 3, duration: 1.5 }}
+        style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
         <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.35em", color: C.greyDark, textTransform: "uppercase" }}>{t.scroll}</span>
         <div style={{ width: 1, height: 32, background: C.blackBorder, position: "relative", overflow: "hidden" }}>
           <div style={{ width: 1, height: 16, background: C.gold, animation: "scrollDown 2.2s ease-in-out infinite" }} />
@@ -671,216 +492,112 @@ function Hero() {
   );
 }
 
-// ============================================
-// SEARCH PALETTE
-// ============================================
-function SearchPalette({ open, setOpen, sliderVal, setSliderVal }: { open: boolean; setOpen: (v: boolean) => void; sliderVal: number; setSliderVal: (v: number) => void }) {
+const labelStyle = { fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase" as const, display: "block", marginBottom: 6 };
+
+function SearchExpanded({ close }: { close: () => void }) {
   const t = useT();
-  return (
-    <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
-      {!open ? (
-        <button onClick={() => setOpen(true)} style={{
-          width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "20px 28px",
-          background: "rgba(245,242,235,0.75)", backdropFilter: "blur(20px)",
-          border: `1px solid ${C.goldLine}`, borderRadius: 100,
-          cursor: "pointer", transition: "all 0.5s", color: C.grey,
-          fontFamily: BODY, fontSize: 17, letterSpacing: "0.03em", fontStyle: "italic",
-        }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.goldLine; }}
-        >
-          <Search size={16} style={{ color: C.gold, flexShrink: 0 }} />
-          <span style={{ flex: 1, textAlign: "left" }}>{t.hero_search}</span>
-          <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>{t.hero_explore}</span>
-        </button>
-      ) : (
-        <SearchExpanded close={() => setOpen(false)} sliderVal={sliderVal} setSliderVal={setSliderVal} />
-      )}
-    </div>
-  );
-}
-function SearchExpanded({ close, sliderVal, setSliderVal }: { close: () => void; sliderVal: number; setSliderVal: (v: number) => void }) {
-  const t = useT();
+  const { setLead } = useContext(LeadContext);
   const [tab, setTab] = useState<"comprar" | "vender">("comprar");
   const [location, setLocation] = useState("");
-  const [assetType, setAssetType] = useState("");
+  const [assetType, setAssetType] = useState<AssetKey | "">("");
+  const [slider, setSlider] = useState(2);
+  const submit = () => {
+    setLead({ operacion: tab, ubicacion: location.trim(), tipo: assetType, rango: RANGES[Math.round(slider)] });
+    scrollToId("contacto");
+  };
   return (
-    <motion.div initial={{ opacity: 0, y: -10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      style={{ background: "rgba(240,237,230,0.96)", backdropFilter: "blur(24px)", border: `1px solid ${C.goldLine}`, borderRadius: 24, padding: "32px 28px", textAlign: "left" }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 28, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 16 }}>
+    <motion.div initial={{ opacity: 0, y: -10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5, ease: easeOut }}
+      style={{ background: "rgba(240,237,230,0.96)", backdropFilter: "blur(24px)", border: `1px solid ${C.goldLine}`, borderRadius: 24, padding: "28px clamp(18px, 4vw, 28px)", textAlign: "start" }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 14 }}>
         {(["comprar", "vender"] as const).map(tb => (
-          <button key={tb} onClick={() => setTab(tb)} style={{
+          <button type="button" key={tb} onClick={() => setTab(tb)} aria-pressed={tab === tb} style={{
             fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase",
-            color: tab === tb ? C.gold : C.greyDark, background: "transparent", border: "none", cursor: "pointer", padding: "8px 16px", transition: "color 0.4s",
-          }}>{tb}</button>
+            color: tab === tb ? C.goldText : C.greyDark, fontWeight: tab === tb ? 500 : 400,
+            background: "transparent", border: "none", borderBottom: `1px solid ${tab === tb ? C.gold : "transparent"}`,
+            cursor: "pointer", padding: "8px 14px", transition: "all 0.4s",
+          }}>{t.search[tb]}</button>
         ))}
-        <button onClick={close} style={{ marginLeft: "auto", fontFamily: UI, fontSize: 10, color: C.greyDark, background: "transparent", border: "none", cursor: "pointer" }}>×</button>
+        <button type="button" onClick={close} aria-label={t.search.cerrar} style={{ marginInlineStart: "auto", color: C.greyDark, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}><X size={14} /></button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+      <div className="grid-2-tight" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
         <div>
-          <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.search_ubicacion}</label>
+          <label htmlFor="s-ubic" style={labelStyle}>{t.search.ubicacion}</label>
           <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 10 }}>
-            <MapPin size={14} style={{ color: C.gold }} />
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t.search_placeholder}
-              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, fontStyle: location ? "normal" : "italic", letterSpacing: "0.03em" }} />
+            <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
+            <input id="s-ubic" value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t.search.ubicacion_ph}
+              style={{ background: "transparent", border: "none", outline: "none", flex: 1, minWidth: 0, color: C.white, fontFamily: BODY, fontSize: 16, letterSpacing: "0.03em" }} />
           </div>
         </div>
         <div>
-          <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.search_tipo}</label>
+          <label htmlFor="s-tipo" style={labelStyle}>{t.search.tipo}</label>
           <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${C.blackBorder}`, paddingBottom: 10 }}>
-            <Home size={14} style={{ color: C.gold }} />
-            <select value={assetType} onChange={(e) => setAssetType(e.target.value)}
-              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: C.white, fontFamily: BODY, fontSize: 15, cursor: "pointer", letterSpacing: "0.03em", WebkitAppearance: "menulist", MozAppearance: "auto" as any }}>
-              <option value="" style={{ background: "#EAE7E0", color: C.white }}>Seleccionar…</option>
-              <option value="edificio" style={{ background: "#EAE7E0", color: C.white }}>Edificio</option>
-              <option value="hotel" style={{ background: "#EAE7E0", color: C.white }}>Hotel / Hospitality</option>
-              <option value="residencial" style={{ background: "#EAE7E0", color: C.white }}>Residencial de lujo</option>
-              <option value="terreno" style={{ background: "#EAE7E0", color: C.white }}>Terreno</option>
-              <option value="singular" style={{ background: "#EAE7E0", color: C.white }}>Activo singular</option>
+            <Home size={14} style={{ color: C.gold, flexShrink: 0 }} />
+            <select id="s-tipo" value={assetType} onChange={(e) => setAssetType(e.target.value as AssetKey | "")}
+              style={{ background: "transparent", border: "none", outline: "none", flex: 1, minWidth: 0, color: C.white, fontFamily: BODY, fontSize: 16, cursor: "pointer" }}>
+              <option value="">{t.search.seleccionar}</option>
+              {(Object.keys(t.assetOptions) as AssetKey[]).map(k => <option key={k} value={k}>{t.assetOptions[k]}</option>)}
             </select>
           </div>
         </div>
       </div>
       <div style={{ marginBottom: 28 }}>
-        <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 14 }}>{t.search_rango}</label>
-        <InvestmentSlider value={sliderVal} onChange={setSliderVal} />
+        <span style={{ ...labelStyle, marginBottom: 14 }}>{t.search.rango}</span>
+        <InvestmentSlider value={slider} onChange={setSlider} label={t.search.rango} />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <LiquidButton href="#contacto" variant="solid" size="md">{t.btn_acceder}</LiquidButton>
+        <LiquidButton variant="solid" size="md" onClick={submit}>{t.search.continuar}</LiquidButton>
       </div>
     </motion.div>
   );
 }
 
 // ============================================
-// ABOUT (kept for reference)
+// ACTIVOS DESTACADOS
 // ============================================
-function About() {
-  const t = useT();
-  return (
-    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative", overflow: "hidden" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
-          <FadeIn>
-            <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>La firma</span>
-              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
-              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
-                Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones que no se anuncian</span>.
-              </h2>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <LiquidButton href="#contacto">{t.btn_firma}</LiquidButton>
-                <LiquidButton href="#vender">{t.btn_valoracion}</LiquidButton>
-              </div>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div style={{ position: "relative" }}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 40 }}>
-                {t.about_text}
-              </p>
-              <div style={{ fontFamily: HEADING, fontSize: "clamp(72px, 11vw, 160px)", color: C.goldLine, fontWeight: 400, letterSpacing: "0.02em", lineHeight: 0.88, fontStyle: "italic", opacity: 0.4 }}>
-                BOSCO
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
-// LA FIRMA
-// ============================================
-function LaFirma() {
-  const t = useT();
-  return (
-    <section style={{ padding: "clamp(120px, 14vw, 220px) 6vw", background: C.black, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
-          <FadeIn>
-            <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>La firma</span>
-              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
-              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
-                Intermediación en <span style={{ color: C.gold, fontStyle: "italic" }}>operaciones off-market de alto valor</span>.
-              </h2>
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <LiquidButton href="#contacto">{t.btn_firma}</LiquidButton>
-                <LiquidButton href="#vender">{t.btn_valoracion}</LiquidButton>
-              </div>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div style={{ position: "relative" }}>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 40 }}>
-                Intermediación exclusiva en activos inmobiliarios fuera de mercado. Edificios, hoteles, residencial de lujo y activos singulares entre 1M€ y 200M€. Acceso directo a oportunidades que se mueven entre profesionales bajo acuerdo de confidencialidad.
-              </p>
-              <div style={{ fontFamily: HEADING, fontSize: "clamp(72px, 11vw, 160px)", color: C.goldLine, fontWeight: 400, letterSpacing: "0.02em", lineHeight: 0.88, fontStyle: "italic", opacity: 0.4 }}>
-                BOSCO
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
-// PROPIEDADES DESTACADAS
-// ============================================
-const PROPERTIES = [
-  { image: "/properties/chueca01.png", tag: "Madrid · Chueca", title: "Residencia de diseño", price: "Precio bajo consulta", meta: "Gran lujo · Interiorismo de autor" },
-  { image: "/properties/gracia01.jpeg", tag: "Madrid · Gracia", title: "Ático con terraza privada", price: "Precio bajo consulta", meta: "Terraza · Piscina · Vistas" },
-  { image: "/properties/plazamayor01.png", tag: "Madrid · Plaza Mayor", title: "Piso señorial reformado", price: "Precio bajo consulta", meta: "Centro histórico · Diseño contemporáneo" },
-];
+const PROPERTY_IMAGES = ["/img/prop-chueca.webp", "/img/prop-gracia.webp", "/img/prop-plazamayor.webp"];
 function PropiedadesDestacadas() {
   const t = useT();
+  const items = t.properties.map((p, i) => ({ ...p, image: PROPERTY_IMAGES[i] }));
   return (
-    <section id="activos" style={{ padding: "clamp(120px, 14vw, 220px) 0", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+    <section id="activos" style={{ padding: "clamp(110px, 14vw, 220px) 0", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
+      <SectionTopLine />
       <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
         <FadeIn>
           <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
-            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_activos}</span>
-            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(44px, 7vw, 120px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
-              {t.h_activos}
+            <Eyebrow>{t.activos.label}</Eyebrow>
+            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(40px, 7vw, 120px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
+              {t.activos.title}
             </h2>
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
-          <DragCarousel items={PROPERTIES} renderItem={(p) => <PropertyCard property={p} />} />
+          <DragCarousel items={items} prevLabel={t.activos.prev} nextLabel={t.activos.next} renderItem={(p) => <PropertyCard property={p} price={t.activos.price} />} />
         </FadeIn>
         <FadeIn delay={0.4}>
-          <p style={{ textAlign: "center", marginTop: 60, fontFamily: BODY, fontSize: 15, color: C.greyDark, letterSpacing: "0.04em", fontStyle: "italic", fontWeight: 300 }}>
-            Esta es la selección que podemos mostrar. Las operaciones que no aparecen aquí requieren una conversación.
+          <p style={{ textAlign: "center", marginTop: 60, fontFamily: BODY, fontSize: 16, color: C.greyDark, letterSpacing: "0.04em", fontStyle: "italic", fontWeight: 400 }}>
+            {t.activos.note}
           </p>
         </FadeIn>
       </div>
     </section>
   );
 }
-function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
+function PropertyCard({ property, price }: { property: { image: string; tag: string; title: string; meta: string }; price: string }) {
   const [hover, setHover] = useState(false);
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", overflow: "hidden", borderRadius: 2, cursor: "pointer", transition: "all 0.6s" }}>
-      <div style={{ width: "100%", height: 460, overflow: "hidden", background: C.blackBorder }}>
-        <img src={property.image} alt={property.title}
+      style={{ position: "relative", overflow: "hidden", borderRadius: 2, userSelect: "none" }}>
+      <div style={{ width: "100%", height: "clamp(340px, 42vw, 520px)", overflow: "hidden", background: C.blackBorder }}>
+        <img src={property.image} alt={property.title} draggable={false} loading="lazy"
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: hover ? "scale(1.05)" : "scale(1)", filter: hover ? "brightness(0.75)" : "brightness(0.85)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
-        <div style={{ position: "absolute", top: 20, right: 20, fontFamily: HEADING, fontSize: 14, letterSpacing: "0.25em", color: "rgba(245,242,235,0.5)", textTransform: "uppercase" }}>JB</div>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(3,3,3,0.95) 0%, transparent 55%)" }} />
       </div>
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px" }}>
-        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.goldText, textTransform: "uppercase", marginBottom: 10 }}>{property.tag}</div>
-        <div style={{ fontFamily: HEADING, fontSize: 22, fontWeight: 400, color: C.white, letterSpacing: "0.01em", marginBottom: 8 }}>{property.title}</div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", borderTop: `1px solid ${hover ? C.goldLine : "rgba(255,255,255,0.1)"}`, paddingTop: 14, marginTop: 14, transition: "border-color 0.5s" }}>
-          <span style={{ fontFamily: BODY, fontSize: 14, color: C.whiteDim, fontWeight: 300, letterSpacing: "0.02em" }}>{property.meta}</span>
-          <span style={{ fontFamily: HEADING, fontSize: 18, color: C.gold, letterSpacing: "0.01em" }}>{property.price}</span>
+        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.gold, textTransform: "uppercase", marginBottom: 10 }}>{property.tag}</div>
+        <div style={{ fontFamily: HEADING, fontSize: "clamp(19px, 2vw, 24px)", fontWeight: 400, color: "#F5F2EB", letterSpacing: "0.01em", marginBottom: 8 }}>{property.title}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12, flexWrap: "wrap", borderTop: `1px solid ${hover ? C.goldLine : "rgba(255,255,255,0.1)"}`, paddingTop: 14, marginTop: 14, transition: "border-color 0.5s" }}>
+          <span style={{ fontFamily: BODY, fontSize: 15, color: C.whiteDim, fontWeight: 400, letterSpacing: "0.02em" }}>{property.meta}</span>
+          <span style={{ fontFamily: HEADING, fontSize: 17, color: C.gold, letterSpacing: "0.01em" }}>{price}</span>
         </div>
       </div>
     </div>
@@ -888,42 +605,139 @@ function PropertyCard({ property }: { property: typeof PROPERTIES[0] }) {
 }
 
 // ============================================
-// DESTINOS
+// TIPOLOGÍAS
 // ============================================
-const DESTINATIONS = [
-  { id: "madrid", title: "MADRID", tag: "Centro de operaciones", description: "El Viso, Salamanca, Castellana, Chamberí", imageSrc: "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=800&h=1000&fit=crop&q=80" },
-  { id: "barcelona", title: "BARCELONA", tag: "Activos premium", description: "Eixample, Pedralbes, Sarrià, Diagonal Mar", imageSrc: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=1000&fit=crop&q=80" },
-  { id: "marbella", title: "MARBELLA", tag: "Costa del Sol", description: "La Zagaleta, Sierra Blanca, Puerto Banús", imageSrc: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&h=1000&fit=crop&q=80" },
-  { id: "paris", title: "PARÍS", tag: "Internacional", description: "XVI arrondissement, Saint-Germain, Marais", imageSrc: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800&h=1000&fit=crop&q=80" },
-  { id: "gstaad", title: "GSTAAD", tag: "Alpes suizos", description: "Chalets exclusivos, estaciones de esquí", imageSrc: "https://images.unsplash.com/photo-1520939817895-060bdaf4fe1b?w=800&h=1000&fit=crop&q=80" },
-  { id: "londres", title: "LONDRES", tag: "Capital financiera", description: "Mayfair, Belgravia, Knightsbridge, Chelsea", imageSrc: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=1000&fit=crop&q=80" },
-];
-function Destinos() {
+const ASSET_IMAGES = ["solares", "terrenos", "edificios", "hoteles", "cadenas", "granlujo", "singulares", "offmarket"].map(n => `/img/tipo-${n}.webp`);
+function TiposActivo() {
   const t = useT();
   return (
-    <section id="destinos" style={{ padding: "clamp(120px, 14vw, 220px) 0", background: C.black, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+    <section id="tipologias" style={{ padding: "clamp(110px, 14vw, 200px) 0", background: C.black, position: "relative" }}>
+      <SectionTopLine />
+      <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
+        <FadeIn>
+          <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
+            <Eyebrow>{t.tipologias.label}</Eyebrow>
+            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 80px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
+              {t.tipologias.h} <span style={{ fontStyle: "italic", color: C.gold }}>{t.tipologias.em}</span>.
+            </h2>
+          </div>
+        </FadeIn>
+        <motion.div className="asset-grid" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }} initial="hidden" whileInView="visible" viewport={VP}>
+          {t.tipologias.items.map((a, i) => (
+            <motion.div key={i} variants={{ hidden: { opacity: 0, y: 24, scale: 0.96 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease } } }}>
+              <AssetTypeCard name={a.name} desc={a.desc} image={ASSET_IMAGES[i]} />
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+function AssetTypeCard({ name, desc, image }: { name: string; desc: string; image: string }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2 }}>
+      <img src={image} alt={name} loading="lazy" width={760} height={950}
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.65) saturate(0.9)" : "brightness(0.5) saturate(0.75)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(3,3,3,0.88) 100%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "clamp(14px, 2vw, 24px)" }}>
+        <div style={{ fontFamily: HEADING, fontSize: "clamp(16px, 1.6vw, 24px)", color: "#F5F2EB", letterSpacing: "0.02em", fontWeight: 400, marginBottom: 4 }}>{name}</div>
+        <div style={{ fontFamily: BODY, fontSize: "clamp(12px, 0.95vw, 14px)", color: C.goldHover, letterSpacing: "0.03em", fontStyle: "italic", fontWeight: 400 }}>{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// EXTRA — YATES Y AVIACIÓN PRIVADA
+// ============================================
+const EXTRA_IMAGES = ["/img/extra-yate.webp", "/img/extra-jet.webp"];
+function ExtraSection() {
+  const t = useT();
+  const [img, setImg] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setImg(i => (i + 1) % EXTRA_IMAGES.length), 4500);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <section id="extra" style={{ padding: "clamp(110px, 14vw, 200px) 0", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
+      <SectionTopLine />
+      <div style={{ padding: "0 6vw", maxWidth: 1200, margin: "0 auto" }}>
+        <FadeIn>
+          <div className="grid-2" style={{ gap: "clamp(40px, 6vw, 100px)", alignItems: "center" }}>
+            <div style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2, background: C.blackBorder }}>
+              {EXTRA_IMAGES.map((src, i) => (
+                <img key={src} src={src} alt={t.extra.title} loading="lazy" width={760} height={950}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "brightness(0.6) saturate(0.8)", opacity: img === i ? 1 : 0, transform: img === i ? "scale(1)" : "scale(1.04)", transition: "opacity 1.4s cubic-bezier(0.25,0.1,0.25,1), transform 6s linear" }} />
+              ))}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.85) 100%)" }} />
+              <div style={{ position: "absolute", top: 20, right: 20 }}>
+                <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase", color: C.gold, background: "rgba(3,3,3,0.7)", border: `1px solid ${C.goldLine}`, padding: "8px 16px", borderRadius: 2 }}>
+                  {t.extra.badge}
+                </span>
+              </div>
+              <div style={{ position: "absolute", bottom: 20, left: 20, display: "flex", gap: 6 }}>
+                {EXTRA_IMAGES.map((_, i) => <span key={i} style={{ width: img === i ? 20 : 6, height: 2, background: img === i ? C.gold : "rgba(245,242,235,0.4)", transition: "all 0.6s" }} />)}
+              </div>
+            </div>
+            <div>
+              <Eyebrow>{t.extra.label}</Eyebrow>
+              <GoldRule />
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(34px, 4vw, 60px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, letterSpacing: "0.01em" }}>
+                <span style={{ color: C.gold, fontStyle: "italic" }}>{t.extra.title}</span>
+              </h2>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.25vw, 19px)", color: C.grey, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 400, marginBottom: 20 }}>
+                {t.extra.body}
+              </p>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.1vw, 17px)", color: C.greyDark, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 400, fontStyle: "italic", marginBottom: 44 }}>
+                {t.extra.note}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                <LiquidButton href="#contacto">{t.extra.cta}</LiquidButton>
+                <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.25em", color: C.greyDark, textTransform: "uppercase" }}>{t.extra.only}</span>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// DESTINOS
+// ============================================
+const DEST_KEYS: DestKey[] = ["madrid", "barcelona", "marbella", "paris", "gstaad", "londres"];
+function Destinos() {
+  const t = useT();
+  const vw = useViewportWidth();
+  const cardWidth = Math.round(Math.min(380, vw * 0.7));
+  const items = DEST_KEYS.map(k => ({ id: k, title: t.destinos.items[k].title, tag: t.destinos.items[k].tag, description: t.destinos.items[k].desc, imageSrc: `/img/dest-${k}.webp` }));
+  return (
+    <section id="destinos" style={{ padding: "clamp(110px, 14vw, 220px) 0", background: C.black, position: "relative", overflow: "hidden" }}>
+      <SectionTopLine />
       <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
         <FadeIn>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "clamp(50px, 6vw, 90px)", flexWrap: "wrap", gap: 20 }}>
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_destinos}</span>
+              <Eyebrow>{t.destinos.label}</Eyebrow>
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 80px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
-                {t.h_destinos} <span style={{ fontStyle: "italic", color: C.gold }}>{t.h_destinos_local}</span>.
+                {t.destinos.h} <span style={{ fontStyle: "italic", color: C.gold }}>{t.destinos.em}</span>.
               </h2>
             </div>
-            <p style={{ fontFamily: BODY, fontSize: 16, color: C.grey, maxWidth: 340, lineHeight: 1.9, fontWeight: 300, letterSpacing: "0.03em" }}>
-              Foco principal en Madrid, con operaciones activas en toda España, Europa y mercados internacionales cuando la operación lo requiere.
+            <p style={{ fontFamily: BODY, fontSize: 17, color: C.grey, maxWidth: 360, lineHeight: 1.9, fontWeight: 400, letterSpacing: "0.03em" }}>
+              {t.destinos.desc}
             </p>
           </div>
         </FadeIn>
         <FadeIn delay={0.2}>
           <CardStack
-            items={DESTINATIONS}
-            cardWidth={380}
-            cardHeight={480}
-            overlap={0.52}
-            spreadDeg={42}
+            items={items}
+            cardWidth={cardWidth}
+            cardHeight={Math.round(cardWidth * 1.26)}
+            overlap={vw < 640 ? 0.62 : 0.52}
+            spreadDeg={vw < 640 ? 30 : 42}
             tiltXDeg={10}
             activeLiftPx={18}
             activeScale={1.02}
@@ -942,164 +756,77 @@ function Destinos() {
 }
 
 // ============================================
-// TIPOS DE ACTIVO
+// LA FIRMA
 // ============================================
-const ASSET_TYPES = [
-  { image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=750&fit=crop&q=80", name: "Solares", desc: "Parcelas urbanas estratégicas" },
-  { image: "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&h=750&fit=crop&q=80", name: "Terrenos", desc: "Fincas y terrenos rústicos" },
-  { image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&h=750&fit=crop&q=80", name: "Edificios", desc: "Edificios completos y señoriales" },
-  { image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=750&fit=crop&q=80", name: "Hoteles", desc: "Hoteles boutique y de lujo" },
-  { image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=750&fit=crop&q=80", name: "Cadenas hoteleras", desc: "Portfolios y cadenas en expansión" },
-  { image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop&q=80", name: "Gran lujo", desc: "Villas y mansiones de alto standing" },
-  { image: "https://images.unsplash.com/photo-1599778022144-a35ed12f24a1?w=600&h=750&fit=crop&q=80", name: "Activos singulares", desc: "Palacios, fincas históricas y patrimonio" },
-  { image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=750&fit=crop&q=80", name: "Off market", desc: "Lo que no está en ningún portal" },
-];
-function TiposActivo() {
+function LaFirma() {
   const t = useT();
   return (
-    <section style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.blackDeep, position: "relative" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-      <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
-        <FadeIn>
-          <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
-            <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_tipologias}</span>
-            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 80px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
-              {t.h_tipologias} <span style={{ fontStyle: "italic", color: C.gold }}>{t.h_tipologias_em}</span>.
-            </h2>
-          </div>
-        </FadeIn>
-        <motion.div
-          className="asset-grid"
-          style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px, 1.5vw, 20px)" }}
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-          initial="hidden"
-          whileInView="visible"
-          viewport={VP}
-        >
-          {ASSET_TYPES.map((a) => (
-            <motion.div
-              key={a.name}
-              variants={{
-                hidden: { opacity: 0, y: 24, scale: 0.96 },
-                visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease } },
-              }}
-            >
-              <AssetTypeCard asset={a} />
-            </motion.div>
-          ))}
-        </motion.div>
-        <style>{`
-          @media (max-width: 1024px) {
-            .asset-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          }
-          @media (max-width: 640px) {
-            .asset-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          }
-        `}</style>
-      </div>
-    </section>
-  );
-}
-function AssetTypeCard({ asset }: { asset: typeof ASSET_TYPES[0] }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2, cursor: "pointer" }}>
-      <img src={asset.image} alt={asset.name}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "brightness(0.65) saturate(0.9)" : "brightness(0.45) saturate(0.7)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(3,3,3,0.88) 100%)" }} />
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "clamp(16px, 2vw, 24px)" }}>
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(16px, 1.6vw, 24px)", color: "#F5F2EB", letterSpacing: "0.02em", fontWeight: 400, marginBottom: 4 }}>{asset.name}</div>
-        <div style={{ fontFamily: BODY, fontSize: "clamp(11px, 0.9vw, 13px)", color: C.gold, letterSpacing: "0.03em", fontStyle: "italic", fontWeight: 300 }}>{asset.desc}</div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// EXTRA — ACTIVOS DE LUJO BAJO SOLICITUD
-// ============================================
-function ExtraSection() {
-  return (
-    <section style={{ padding: "clamp(120px, 14vw, 200px) 0", background: C.black, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
-      <div style={{ padding: "0 6vw", maxWidth: 1200, margin: "0 auto" }}>
-        <FadeIn>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(40px, 6vw, 100px)", alignItems: "center" }}>
-            {/* Image */}
-            <div style={{ position: "relative", aspectRatio: "4/5", overflow: "hidden", borderRadius: 2 }}>
-              <img src="https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=600&h=750&fit=crop&q=80" alt="Activos de lujo"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "brightness(0.5) saturate(0.8)" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(3,3,3,0.85) 100%)" }} />
-              <div style={{ position: "absolute", top: 20, right: 20 }}>
-                <span style={{
-                  fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", textTransform: "uppercase",
-                  color: C.gold, background: "rgba(3,3,3,0.7)", border: `1px solid ${C.goldLine}`,
-                  padding: "8px 16px", borderRadius: 2,
-                }}>Bajo solicitud</span>
-              </div>
-            </div>
-            {/* Content */}
+    <section id="firma" style={{ padding: "clamp(110px, 14vw, 220px) 6vw", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
+      <SectionTopLine />
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <div className="grid-2" style={{ gap: "clamp(60px, 8vw, 140px)", alignItems: "center" }}>
+          <FadeIn>
             <div>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>Más allá del inmobiliario</span>
-              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
-              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 4vw, 60px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, letterSpacing: "0.01em" }}>
-                <span style={{ color: C.gold, fontStyle: "italic" }}>Extra</span>
+              <Eyebrow>{t.firma.label}</Eyebrow>
+              <GoldRule />
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(32px, 4vw, 58px)", fontWeight: 400, color: C.white, lineHeight: 1.15, marginBottom: 44, letterSpacing: "0.01em" }}>
+                {t.firma.h} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.firma.em}</span>.
               </h2>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)", color: C.grey, lineHeight: 2, letterSpacing: "0.03em", fontWeight: 300, marginBottom: 20 }}>
-                Yates, alquiler de embarcaciones, arte, y cualquier activo de alto standing. Lo que busque, lo conseguimos.
-              </p>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(14px, 1.1vw, 16px)", color: C.greyDark, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 300, fontStyle: "italic", marginBottom: 44 }}>
-                Servicio exclusivo bajo cita previa. Cada solicitud se gestiona de forma privada y confidencial.
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-                <LiquidButton href="#contacto">Solicitar acceso</LiquidButton>
-                <span style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.25em", color: C.greyDark, textTransform: "uppercase" }}>Solo cita</span>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <LiquidButton href="#contacto">{t.firma.btn_contacto}</LiquidButton>
+                <LiquidButton href="#vender">{t.firma.btn_valoracion}</LiquidButton>
               </div>
             </div>
-          </div>
-        </FadeIn>
+          </FadeIn>
+          <FadeIn delay={0.2}>
+            <div style={{ position: "relative" }}>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.35vw, 21px)", color: C.grey, lineHeight: 1.9, letterSpacing: "0.03em", fontWeight: 400, marginBottom: 40 }}>
+                {t.firma.body}
+              </p>
+              <div aria-hidden="true" style={{ fontFamily: HEADING, fontSize: "clamp(72px, 11vw, 160px)", color: C.goldLine, fontWeight: 400, letterSpacing: "0.02em", lineHeight: 0.88, fontStyle: "italic", opacity: 0.4 }}>
+                BOSCO
+              </div>
+            </div>
+          </FadeIn>
+        </div>
       </div>
     </section>
   );
 }
 
 // ============================================
-// VENDER
+// VENDER (sin humo)
 // ============================================
+const venderStagger: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } } };
+const venderReveal: Variants = { hidden: { opacity: 0, y: 25 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease } } };
+const venderLine: Variants = { hidden: { width: 0 }, visible: { width: 32, transition: { duration: 1.2, ease } } };
 function Vender() {
   const t = useT();
+  const { setLead } = useContext(LeadContext);
   const [address, setAddress] = useState("");
-  const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } } };
-  const reveal = { hidden: { opacity: 0, y: 25 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease } } };
-  const lineReveal = { hidden: { width: 0 }, visible: { width: 32, transition: { duration: 1.2, ease } } };
+  const submit = () => { setLead({ operacion: "vender", direccion: address.trim() }); scrollToId("contacto"); };
   return (
-    <section id="vender" style={{ position: "relative", minHeight: "80vh", display: "flex", alignItems: "center", overflow: "hidden", isolation: "isolate" }}>
-      <SmokeCanvas color={[0.60, 0.57, 0.50]} base={[0.96, 0.94, 0.90]} intensity={0.25} />
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder, zIndex: 1 }} />
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={VP}
-        style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(100px, 12vw, 180px) 6vw", textAlign: "center" }}
-      >
-        <motion.span variants={reveal} style={{ display: "block", fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_vender}</motion.span>
-        <motion.div variants={lineReveal} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
-        <motion.h2 variants={reveal} style={{ fontFamily: HEADING, fontSize: "clamp(38px, 5vw, 72px)", fontWeight: 400, color: "#030303", lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
-          {t.h_vender} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_vender_em}</span>.
+    <section id="vender" style={{ position: "relative", background: `linear-gradient(180deg, ${C.black} 0%, #EFEBE3 100%)`, overflow: "hidden" }}>
+      <SectionTopLine />
+      <motion.div variants={venderStagger} initial="hidden" whileInView="visible" viewport={VP}
+        style={{ position: "relative", maxWidth: 1100, margin: "0 auto", width: "100%", padding: "clamp(110px, 13vw, 200px) 6vw", textAlign: "center" }}>
+        <motion.span variants={venderReveal} style={{ display: "block", fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.vender.label}</motion.span>
+        <motion.div variants={venderLine} style={{ height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, margin: "20px auto 40px" }} />
+        <motion.h2 variants={venderReveal} style={{ fontFamily: HEADING, fontSize: "clamp(36px, 5vw, 72px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 28, maxWidth: 800, marginLeft: "auto", marginRight: "auto", letterSpacing: "0.01em" }}>
+          {t.vender.h} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.vender.em}</span>.
         </motion.h2>
-        <motion.p variants={reveal} style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.3vw, 20px)", color: "#030303", lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 300 }}>
-          {t.vender_desc}
+        <motion.p variants={venderReveal} style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.35vw, 21px)", color: C.grey, lineHeight: 1.9, maxWidth: 620, margin: "0 auto 60px", letterSpacing: "0.03em", fontWeight: 400 }}>
+          {t.vender.desc}
         </motion.p>
-        <motion.div variants={reveal} style={{ display: "flex", alignItems: "center", gap: 16, maxWidth: 640, margin: "0 auto 32px", flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
+        <motion.form variants={venderReveal} onSubmit={(e) => { e.preventDefault(); submit(); }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, maxWidth: 680, margin: "0 auto", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "min(280px, 100%)", display: "flex", alignItems: "center", gap: 12, padding: "18px 24px", background: "#FFFFFF", border: "1px solid #E0DDD6", borderRadius: 100 }}>
             <MapPin size={14} style={{ color: C.gold, flexShrink: 0 }} />
-            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender_placeholder}
-              style={{ background: "transparent", border: "none", outline: "none", flex: 1, color: "#030303", fontFamily: BODY, fontSize: 15, letterSpacing: "0.03em", fontStyle: address ? "normal" : "italic" }} />
+            <input aria-label={t.vender.placeholder} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.vender.placeholder}
+              style={{ background: "transparent", border: "none", outline: "none", flex: 1, minWidth: 0, color: C.white, fontFamily: BODY, fontSize: 16, letterSpacing: "0.03em" }} />
           </div>
-          <LiquidButton href="#contacto" variant="solid">{t.btn_valoracion}</LiquidButton>
-        </motion.div>
+          <LiquidButton type="submit" variant="solid">{t.vender.btn}</LiquidButton>
+        </motion.form>
       </motion.div>
     </section>
   );
@@ -1108,131 +835,173 @@ function Vender() {
 // ============================================
 // CONTACTO
 // ============================================
-function Contacto() {
-  const t = useT();
-  const [focused, setFocused] = useState<string | null>(null);
-  const [enviado, setEnviado] = useState(false);
-  const inputStyle = {
-    background: "transparent", border: "none",
-    borderBottom: `1px solid ${C.blackBorder}`,
-    color: C.white, fontFamily: BODY, fontSize: "clamp(15px, 1.2vw, 18px)" as const,
-    padding: "16px 0", outline: "none", width: "100%",
-    letterSpacing: "0.04em", fontWeight: 300,
-  };
-  const GoldUnderline = ({ active }: { active: boolean }) => (
-    <motion.div
-      animate={{ scaleX: active ? 1 : 0 }}
-      transition={{ duration: 0.5, ease }}
-      style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: C.gold, transformOrigin: "center" }}
-    />
+function GoldUnderline({ active }: { active: boolean }) {
+  return (
+    <motion.div animate={{ scaleX: active ? 1 : 0 }} transition={{ duration: 0.5, ease }}
+      style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: C.gold, transformOrigin: "center" }} />
   );
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+}
+
+type SendState = "idle" | "sending" | "ok" | "error";
+
+function Contacto({ lang }: { lang: Lang }) {
+  const t = useT();
+  const { lead, setLead } = useContext(LeadContext);
+  const openLegal = useContext(LegalContext);
+  const [focused, setFocused] = useState<string | null>(null);
+  const [state, setState] = useState<SendState>("idle");
+  const [validation, setValidation] = useState<string | null>(null);
+  const inputStyle = {
+    background: "transparent", border: "none", borderBottom: `1px solid ${C.blackBorder}`,
+    color: C.white, fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 18px)",
+    padding: "16px 0", outline: "none", width: "100%", letterSpacing: "0.04em", fontWeight: 400,
+  };
+
+  const leadParts: string[] = [];
+  if (lead) {
+    leadParts.push(lead.operacion === "vender" ? t.contacto.vender : t.contacto.comprar);
+    if (lead.tipo) leadParts.push(t.assetOptions[lead.tipo]);
+    if (lead.rango) leadParts.push(lead.rango);
+    if (lead.ubicacion) leadParts.push(lead.ubicacion);
+    if (lead.direccion) leadParts.push(lead.direccion);
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const nombre = formData.get('nombre');
-    const email = formData.get('email');
-    if (!nombre || !email) return;
-    formData.append('_subject', 'Nueva solicitud desde javierbosco.com');
-    formData.append('_template', 'table');
-    formData.append('_captcha', 'false');
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    if (fd.get("_honey")) return; // bot
+    if (!String(fd.get("nombre") || "").trim() || !String(fd.get("email") || "").trim()) { setValidation(t.contacto.required); return; }
+    if (!fd.get("consentimiento")) { setValidation(t.contacto.consent_required); return; }
+    setValidation(null);
+    // Datos de la solicitud (buscador / vender), en castellano para el equipo
+    if (lead) {
+      fd.append("operacion", lead.operacion === "vender" ? "Venta" : "Compra");
+      if (lead.tipo) fd.append("tipo_activo", T.es.assetOptions[lead.tipo]);
+      if (lead.rango) fd.append("rango_inversion", lead.rango);
+      if (lead.ubicacion) fd.append("ubicacion", lead.ubicacion);
+      if (lead.direccion) fd.append("direccion_activo", lead.direccion);
+    }
+    fd.append("idioma_web", lang);
+    fd.set("consentimiento", "Acepta la política de privacidad");
+    fd.append("_subject", "Nueva solicitud desde javierbosco.com");
+    fd.append("_template", "table");
+    fd.append("_captcha", "false");
+    setState("sending");
     try {
-      const res = await fetch('https://formsubmit.co/ajax/javierbosco@gmail.com', {
-        method: 'POST',
-        body: formData,
+      const res = await fetch(`https://formsubmit.co/ajax/${EMAIL_FORMULARIO}`, {
+        method: "POST", headers: { Accept: "application/json" }, body: fd,
       });
-      const data = await res.json();
-      if (data.success) {
-        setEnviado(true);
-        setTimeout(() => {
-          setEnviado(false);
-          (e.target as HTMLFormElement).reset();
-        }, 6000);
+      const data: { success?: string | boolean; message?: string } = await res.json();
+      if (res.ok && String(data.success) === "true") {
+        setState("ok");
+        form.reset();
+        setLead(null);
       } else {
-        console.error('FormSubmit error:', data);
+        console.error("FormSubmit:", data);
+        setState("error");
       }
     } catch (err) {
-      console.error('Error:', err);
+      console.error("FormSubmit:", err);
+      setState("error");
     }
   };
+
   return (
     <section id="contacto" style={{ padding: "clamp(100px, 12vw, 180px) 6vw", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: "6vw", right: "6vw", height: 1, background: C.blackBorder }} />
+      <SectionTopLine />
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(60px, 8vw, 140px)", alignItems: "start" }}>
+        <div className="grid-2" style={{ gap: "clamp(50px, 8vw, 140px)", alignItems: "start" }}>
           <div>
             <FadeIn>
-              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.goldText, textTransform: "uppercase" }}>{t.section_contacto}</span>
-              <div style={{ width: 32, height: 1, background: `linear-gradient(90deg, ${C.gold}, transparent)`, marginTop: 20, marginBottom: 44 }} />
+              <Eyebrow>{t.contacto.label}</Eyebrow>
+              <GoldRule />
               <h2 style={{ fontFamily: HEADING, fontSize: "clamp(34px, 3.8vw, 56px)", fontWeight: 400, color: C.white, lineHeight: 1.1, marginBottom: 32, letterSpacing: "0.01em" }}>
-                {t.h_contacto}<br /><span style={{ color: C.gold, fontStyle: "italic" }}>{t.h_contacto_em}</span>.
+                {t.contacto.h}<br /><span style={{ color: C.gold, fontStyle: "italic" }}>{t.contacto.em}</span>.
               </h2>
-              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 19px)", color: C.grey, lineHeight: 1.95, maxWidth: 420, letterSpacing: "0.03em", fontWeight: 300 }}>
-                {t.contacto_desc}
+              <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.25vw, 19px)", color: C.grey, lineHeight: 1.9, maxWidth: 420, letterSpacing: "0.03em", fontWeight: 400 }}>
+                {t.contacto.desc}
               </p>
             </FadeIn>
             <FadeIn delay={0.3}>
               <div style={{ marginTop: 56 }}>
-                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 12 }}>Email</div>
-                <a href="mailto:javierbosco@javierbosco.com" style={{ fontFamily: BODY, fontSize: 17, color: C.grey, textDecoration: "none", letterSpacing: "0.05em", transition: "color 0.5s", fontWeight: 300 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}>
-                  javierbosco@javierbosco.com
+                <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", marginBottom: 12 }}>{t.contacto.email_label}</div>
+                <a href={`mailto:${EMAIL_PUBLICO}`} className="hover-gold" style={{ fontFamily: BODY, fontSize: 18, color: C.grey, textDecoration: "none", letterSpacing: "0.05em", transition: "color 0.5s" }}>
+                  {EMAIL_PUBLICO}
                 </a>
               </div>
             </FadeIn>
           </div>
-          <div style={{ paddingTop: "clamp(20px, 4vw, 60px)" }}>
-            <form onSubmit={handleSubmit}>
-            <FadeIn delay={0.2}>
-              <div style={{ marginBottom: 36, position: "relative" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_nombre}</label>
-                <input name="nombre" style={inputStyle} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
-                <GoldUnderline active={focused === "name"} />
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <div style={{ marginBottom: 36, position: "relative" }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_email}</label>
-                <input name="email" type="email" style={inputStyle} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
-                <GoldUnderline active={focused === "email"} />
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.4}>
-              <div style={{ marginBottom: 36 }}>
-                <label style={{ fontFamily: UI, fontSize: 8, letterSpacing: "0.3em", color: C.greyDark, textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t.label_telefono}</label>
-                <div style={{ display: "flex", gap: 12 }}>
-                  <div style={{ position: "relative", width: 80 }}>
-                    <input name="prefijo" style={{ ...inputStyle, width: 80, textAlign: "center" as const }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
-                    <GoldUnderline active={focused === "prefix"} />
+          <div style={{ paddingTop: "clamp(0px, 4vw, 60px)" }}>
+            <form onSubmit={handleSubmit} noValidate>
+              <input type="text" name="_honey" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} />
+              {leadParts.length > 0 && (
+                <div style={{ marginBottom: 36, padding: "14px 18px", border: `1px solid ${C.goldLine}`, borderRadius: 2, display: "flex", alignItems: "center", gap: 12, justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ ...labelStyle, marginBottom: 6 }}>{t.contacto.interes}</div>
+                    <div style={{ fontFamily: BODY, fontSize: 16, color: C.white }}>{leadParts.join(" · ")}</div>
                   </div>
-                  <div style={{ position: "relative", flex: 1 }}>
-                    <input name="telefono" type="tel" style={inputStyle} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
-                    <GoldUnderline active={focused === "phone"} />
+                  <button type="button" onClick={() => setLead(null)} aria-label={t.contacto.quitar} style={{ background: "transparent", border: "none", color: C.greyDark, cursor: "pointer", display: "flex" }}><X size={14} /></button>
+                </div>
+              )}
+              <FadeIn delay={0.2}>
+                <div style={{ marginBottom: 36, position: "relative" }}>
+                  <label htmlFor="f-nombre" style={labelStyle}>{t.contacto.nombre}</label>
+                  <input id="f-nombre" name="nombre" autoComplete="name" required style={inputStyle} onFocus={() => setFocused("name")} onBlur={() => setFocused(null)} />
+                  <GoldUnderline active={focused === "name"} />
+                </div>
+              </FadeIn>
+              <FadeIn delay={0.3}>
+                <div style={{ marginBottom: 36, position: "relative" }}>
+                  <label htmlFor="f-email" style={labelStyle}>{t.contacto.email}</label>
+                  <input id="f-email" name="email" type="email" autoComplete="email" required style={inputStyle} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} />
+                  <GoldUnderline active={focused === "email"} />
+                </div>
+              </FadeIn>
+              <FadeIn delay={0.4}>
+                <div style={{ marginBottom: 32 }}>
+                  <label htmlFor="f-tel" style={labelStyle}>{t.contacto.telefono}</label>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <div style={{ position: "relative", width: 80, flexShrink: 0 }}>
+                      <input name="prefijo" aria-label="Prefijo" autoComplete="tel-country-code" style={{ ...inputStyle, textAlign: "center" }} defaultValue="+34" onFocus={() => setFocused("prefix")} onBlur={() => setFocused(null)} />
+                      <GoldUnderline active={focused === "prefix"} />
+                    </div>
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <input id="f-tel" name="telefono" type="tel" autoComplete="tel-national" style={inputStyle} onFocus={() => setFocused("phone")} onBlur={() => setFocused(null)} />
+                      <GoldUnderline active={focused === "phone"} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.5}>
-              <div style={{ marginTop: 44 }}>
-                {enviado && (
-                  <div style={{
-                    padding: '16px 24px',
-                    background: 'rgba(160,140,91,0.12)',
-                    border: '1px solid rgba(160,140,91,0.25)',
-                    borderRadius: 4,
-                    marginBottom: 20,
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: 15,
-                    color: '#A08C5B',
-                    fontStyle: 'italic',
-                    textAlign: 'center'
-                  }}>
-                    Solicitud recibida. Le contactaremos con la mayor brevedad posible.
-                  </div>
-                )}
-                <LiquidButton type="submit" variant="solid">{t.btn_enviar}</LiquidButton>
-              </div>
-            </FadeIn>
+              </FadeIn>
+              <FadeIn delay={0.45}>
+                <label style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer", fontFamily: BODY, fontSize: 15, color: C.grey, lineHeight: 1.5 }}>
+                  <input type="checkbox" name="consentimiento" value="si" required style={{ marginTop: 4, accentColor: C.gold, width: 14, height: 14, flexShrink: 0 }} />
+                  <span>
+                    {t.contacto.consent_pre}{" "}
+                    <button type="button" onClick={() => openLegal("privacidad")} style={{ background: "none", border: "none", padding: 0, color: C.goldText, textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer", font: "inherit" }}>
+                      {t.contacto.consent_link}
+                    </button>.
+                  </span>
+                </label>
+              </FadeIn>
+              <FadeIn delay={0.5}>
+                <div style={{ marginTop: 40 }} aria-live="polite">
+                  {validation && <p style={{ fontFamily: BODY, fontSize: 15, color: "#8A3B2E", marginBottom: 16 }}>{validation}</p>}
+                  {state === "ok" && (
+                    <div style={{ padding: "16px 24px", background: C.goldDim, border: `1px solid ${C.goldLine}`, borderRadius: 2, marginBottom: 20, fontFamily: BODY, fontSize: 16, color: C.goldText, fontStyle: "italic", textAlign: "center" }}>
+                      {t.contacto.ok}
+                    </div>
+                  )}
+                  {state === "error" && (
+                    <p style={{ fontFamily: BODY, fontSize: 15, color: "#8A3B2E", marginBottom: 16 }}>
+                      {t.contacto.error} <a href={`mailto:${EMAIL_PUBLICO}`} style={{ color: "inherit" }}>{EMAIL_PUBLICO}</a>.
+                    </p>
+                  )}
+                  <LiquidButton type="submit" variant="solid" disabled={state === "sending"}>
+                    {state === "sending" ? t.contacto.enviando : t.contacto.enviar}
+                  </LiquidButton>
+                </div>
+              </FadeIn>
             </form>
           </div>
         </div>
@@ -1242,128 +1011,207 @@ function Contacto() {
 }
 
 // ============================================
+// FAQ (desplegables)
+// ============================================
+function FAQ() {
+  const t = useT();
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <section id="faq" style={{ padding: "clamp(100px, 12vw, 180px) 6vw", background: C.black, position: "relative" }}>
+      <SectionTopLine />
+      <div className="grid-faq" style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <FadeIn>
+          <div>
+            <Eyebrow>{t.faq.label}</Eyebrow>
+            <GoldRule />
+            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(34px, 3.8vw, 56px)", fontWeight: 400, color: C.white, lineHeight: 1.1, letterSpacing: "0.01em" }}>
+              {t.faq.h} <span style={{ color: C.gold, fontStyle: "italic" }}>{t.faq.em}</span>.
+            </h2>
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.2}>
+          <div style={{ borderTop: `1px solid ${C.blackBorder}` }}>
+            {t.faq.items.map((f, i) => {
+              const isOpen = open === i;
+              return (
+                <div key={i} style={{ borderBottom: `1px solid ${C.blackBorder}` }}>
+                  <button type="button" onClick={() => setOpen(isOpen ? null : i)} aria-expanded={isOpen} aria-controls={`faq-${i}`}
+                    style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, padding: "26px 0", background: "transparent", border: "none", cursor: "pointer", textAlign: "start" }}>
+                    <span style={{ fontFamily: HEADING, fontSize: "clamp(17px, 1.5vw, 21px)", color: isOpen ? C.goldText : C.white, fontWeight: 400, lineHeight: 1.4, transition: "color 0.5s" }}>{f.q}</span>
+                    <span style={{ color: C.gold, flexShrink: 0, display: "flex" }}>{isOpen ? <Minus size={16} strokeWidth={1.5} /> : <Plus size={16} strokeWidth={1.5} />}</span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div id={`faq-${i}`} key="c" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.6, ease }} style={{ overflow: "hidden" }}>
+                        <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 18px)", color: C.grey, lineHeight: 1.85, letterSpacing: "0.02em", padding: "0 40px 28px 0", maxWidth: 640 }}>{f.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
 // FOOTER
 // ============================================
+const footerStagger: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+const footerCol: Variants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } };
+const linkStyle = { display: "block", fontFamily: BODY, fontSize: 15, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "start" as const };
+const colTitle = { fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.goldText, textTransform: "uppercase" as const, marginBottom: 20 };
+
+function FooterLink({ id, children }: { id: string; children: ReactNode }) {
+  return <a href={`#${id}`} className="hover-gold" style={linkStyle} onClick={(e) => { e.preventDefault(); scrollToId(id); }}>{children}</a>;
+}
+
 function Footer() {
   const t = useT();
-  const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
-  const col = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } };
+  const openLegal = useContext(LegalContext);
   return (
-    <footer style={{ background: C.black, borderTop: `1px solid ${C.blackBorder}`, padding: "60px 6vw 30px" }}>
+    <footer style={{ background: C.blackDeep, borderTop: `1px solid ${C.blackBorder}`, padding: "70px 6vw 30px" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={VP}
-          style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr 1fr", gap: 40, paddingBottom: 50, borderBottom: `1px solid ${C.blackBorder}` }}
-        >
-          <motion.div variants={col}>
+        <motion.div className="footer-grid" variants={footerStagger} initial="hidden" whileInView="visible" viewport={VP}
+          style={{ paddingBottom: 50, borderBottom: `1px solid ${C.blackBorder}` }}>
+          <motion.div variants={footerCol}>
             <div style={{ fontFamily: HEADING, fontSize: 18, letterSpacing: "0.2em", color: C.white, marginBottom: 16 }}>JAVIER BOSCO</div>
-            <div style={{ fontFamily: HEADING, fontSize: 12, letterSpacing: "0.05em", color: C.goldText, fontStyle: "italic", marginBottom: 24 }}>{t.tagline}</div>
-            <div style={{ fontFamily: BODY, fontSize: 14, color: C.grey, lineHeight: 1.8, fontWeight: 300, maxWidth: 260 }}>{t.footer_desc}</div>
+            <div style={{ fontFamily: HEADING, fontSize: 13, letterSpacing: "0.05em", color: C.goldText, fontStyle: "italic", marginBottom: 24 }}>{t.tagline}</div>
+            <div style={{ fontFamily: BODY, fontSize: 15, color: C.grey, lineHeight: 1.8, maxWidth: 280, marginBottom: 24 }}>{t.footer.desc}</div>
+            <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer" className="hover-gold" style={linkStyle}>Instagram</a>
+            <a href={`mailto:${EMAIL_PUBLICO}`} className="hover-gold" style={linkStyle}>{EMAIL_PUBLICO}</a>
           </motion.div>
-          <motion.div variants={col}><FooterColumn title={t.nav_destinos} items={["Madrid", "España", "Europa", "Internacional"]} /></motion.div>
-          <motion.div variants={col}><FooterColumn title={t.nav_activos} items={["Solares", "Terrenos", "Edificios", "Hoteles", "Gran lujo", "Off market"]} /></motion.div>
-          <motion.div variants={col}><FooterColumn title="La firma" items={["Filosofía", "Vender", "Valorar", "Contacto"]} /></motion.div>
-          <motion.div variants={col}>
-            <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.goldText, textTransform: "uppercase", marginBottom: 20 }}>Social</div>
-            <a href="https://www.instagram.com/javierboscoproperties/" target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", fontWeight: 300 }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}>Instagram</a>
-            <a href="mailto:javierbosco@javierbosco.com"
-              style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", transition: "color 0.4s", fontWeight: 300 }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}>Email</a>
+          <motion.div variants={footerCol}>
+            <div style={colTitle}>{t.footer.col_destinos}</div>
+            {DEST_KEYS.map(k => <FooterLink key={k} id="destinos">{t.destinos.items[k].title.charAt(0) + t.destinos.items[k].title.slice(1).toLowerCase()}</FooterLink>)}
+          </motion.div>
+          <motion.div variants={footerCol}>
+            <div style={colTitle}>{t.footer.col_activos}</div>
+            {t.tipologias.items.slice(0, 7).map(a => <FooterLink key={a.name} id="tipologias">{a.name}</FooterLink>)}
+          </motion.div>
+          <motion.div variants={footerCol}>
+            <div style={colTitle}>{t.footer.col_firma}</div>
+            <FooterLink id="firma">{t.footer.firma_links.firma}</FooterLink>
+            <FooterLink id="faq">{t.footer.firma_links.faq}</FooterLink>
+            <FooterLink id="vender">{t.footer.firma_links.vender}</FooterLink>
+            <FooterLink id="contacto">{t.footer.firma_links.contacto}</FooterLink>
+          </motion.div>
+          <motion.div variants={footerCol}>
+            <div style={colTitle}>{t.footer.col_legal}</div>
+            <button type="button" className="hover-gold" style={linkStyle} onClick={() => openLegal("aviso-legal")}>{t.footer.aviso}</button>
+            <button type="button" className="hover-gold" style={linkStyle} onClick={() => openLegal("privacidad")}>{t.footer.privacidad}</button>
+            <button type="button" className="hover-gold" style={linkStyle} onClick={() => openLegal("cookies")}>{t.footer.cookies}</button>
           </motion.div>
         </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={VP}
-          transition={{ duration: 0.8, delay: 0.4, ease }}
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, flexWrap: "wrap", gap: 12 }}
-        >
-          <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>© 2026 Javier Bosco Properties</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, flexWrap: "wrap", gap: 12 }}>
+          <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>© {new Date().getFullYear()} Javier Bosco Properties · {t.footer.rights}</span>
           <span style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.2em", color: C.greyDark, textTransform: "uppercase" }}>Madrid · España</span>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );
 }
-function FooterColumn({ title, items }: { title: string; items: string[] }) {
+
+// ============================================
+// MODAL LEGAL
+// ============================================
+function LegalModal({ which, close }: { which: LegalKey | null; close: () => void }) {
+  useEffect(() => {
+    if (!which) return;
+    lenisInstance?.stop();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); lenisInstance?.start(); };
+  }, [which, close]);
   return (
-    <div>
-      <div style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.25em", color: C.goldText, textTransform: "uppercase", marginBottom: 20 }}>{title}</div>
-      {items.map(it => (
-        <a key={it} href="#" style={{ display: "block", fontFamily: BODY, fontSize: 14, color: C.grey, textDecoration: "none", letterSpacing: "0.04em", marginBottom: 10, transition: "color 0.4s", fontWeight: 300 }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = C.gold)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = C.grey)}>{it}</a>
-      ))}
-    </div>
+    <AnimatePresence>
+      {which && (
+        <motion.div key="legal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }}
+          onClick={close}
+          style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(3,3,3,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: "4vh 16px" }}>
+          <motion.div role="dialog" aria-modal="true" aria-labelledby="legal-title" data-lenis-prevent
+            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} transition={{ duration: 0.5, ease }}
+            onClick={(e) => e.stopPropagation()}
+            className="legal-doc" dir="ltr" lang="es"
+            style={{ background: C.black, maxWidth: 760, width: "100%", maxHeight: "92vh", overflowY: "auto", borderRadius: 2, border: `1px solid ${C.blackBorder}`, padding: "clamp(28px, 5vw, 56px)", position: "relative" }}>
+            <button type="button" onClick={close} aria-label="Cerrar" style={{ position: "sticky", top: 0, float: "right", background: C.black, border: `1px solid ${C.blackBorder}`, borderRadius: 2, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: C.white }}><X size={14} /></button>
+            <Eyebrow>Javier Bosco Properties</Eyebrow>
+            <h2 id="legal-title" style={{ fontFamily: HEADING, fontSize: "clamp(28px, 3.2vw, 42px)", fontWeight: 400, color: C.white, margin: "16px 0 28px" }}>{LEGAL[which].title}</h2>
+            {LEGAL[which].body()}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 // ============================================
 // MAIN
 // ============================================
+function readStoredLang(): Lang {
+  try { const v = localStorage.getItem("lang"); if (isLang(v)) return v; } catch { /* sin almacenamiento */ }
+  return "es";
+}
+
+const LEGAL_HASHES: LegalKey[] = ["aviso-legal", "privacidad", "cookies"];
+
 export default function JavierBoscoLanding() {
-  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "es");
+  const [lang, setLang] = useState<Lang>(readStoredLang);
+  const [lead, setLead] = useState<Lead>(null);
+  const [legal, setLegal] = useState<LegalKey | null>(() => {
+    const h = window.location.hash.slice(1) as LegalKey;
+    return LEGAL_HASHES.includes(h) ? h : null;
+  });
 
   useEffect(() => {
-    localStorage.setItem("lang", lang);
+    try { localStorage.setItem("lang", lang); } catch { /* sin almacenamiento */ }
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
 
-  // Lenis smooth scroll
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-    return () => lenis.destroy();
+    const lenis = new Lenis({ duration: 1.2, easing: (x: number) => Math.min(1, 1.001 - Math.pow(2, -10 * x)), smoothWheel: true });
+    lenisInstance = lenis;
+    let raf = 0;
+    const loop = (time: number) => { lenis.raf(time); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); lenis.destroy(); lenisInstance = null; };
+  }, []);
+
+  const openLegal = useCallback((k: LegalKey) => {
+    setLegal(k);
+    history.replaceState(null, "", `#${k}`);
+  }, []);
+  const closeLegal = useCallback(() => {
+    setLegal(null);
+    history.replaceState(null, "", window.location.pathname + window.location.search);
   }, []);
 
   return (
     <LangContext.Provider value={lang}>
-      <div style={{ background: C.black, minHeight: "100vh", overflowX: "hidden" }}>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500&display=swap');
-          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-          body {
-            background: #F5F2EB; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-          }
-          ::selection { background: rgba(160,140,91,0.3); color: #030303; }
-          ::placeholder { color: #585249; font-style: italic; }
-          html.lenis, html.lenis body { height: auto; }
-          .lenis.lenis-smooth { scroll-behavior: auto !important; }
-          @keyframes scrollDown { 0% { transform: translateY(-16px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(32px); opacity: 0; } }
-          input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #A08C5B; border: 2px solid #F5F2EB; cursor: pointer; box-shadow: 0 0 12px rgba(160,140,91,0.3); }
-          input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #A08C5B; border: 2px solid #F5F2EB; cursor: pointer; }
-          @media (max-width: 900px) { nav > ul { display: none !important; } }
-          @media (max-width: 768px) {
-            div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-            div[style*="grid-template-columns: 1fr 1.2fr"] { grid-template-columns: 1fr !important; }
-            div[style*="grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
-          }
-        `}</style>
-        <NavHeader lang={lang} setLang={setLang} />
-        <Hero />
-        <PropiedadesDestacadas />
-        <TiposActivo />
-        <ExtraSection />
-        <Destinos />
-        <LaFirma />
-        <Vender />
-        <Contacto />
-        <Footer />
-      </div>
+      <LeadContext.Provider value={{ lead, setLead }}>
+        <LegalContext.Provider value={openLegal}>
+          <div style={{ background: C.black, minHeight: "100vh", overflowX: "clip" }}>
+            <NavHeader lang={lang} setLang={setLang} />
+            <main>
+              <Hero />
+              <PropiedadesDestacadas />
+              <TiposActivo />
+              <ExtraSection />
+              <Destinos />
+              <LaFirma />
+              <Vender />
+              <Contacto lang={lang} />
+              <FAQ />
+            </main>
+            <Footer />
+            <LegalModal which={legal} close={closeLegal} />
+          </div>
+        </LegalContext.Provider>
+      </LeadContext.Provider>
     </LangContext.Provider>
   );
 }
