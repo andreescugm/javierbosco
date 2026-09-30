@@ -18,8 +18,6 @@ export type Dict = {
     ubicacion: string; ubicacion_ph: string; tipo: string; seleccionar: string; rango: string; continuar: string; cerrar: string;
   };
   assetOptions: Record<AssetKey, string>;
-  activos: { label: string; title: string; note: string; price: string; prev: string; next: string };
-  properties: { tag: string; title: string; meta: string }[];
   tipologias: { label: string; h: string; em: string; items: { name: string; desc: string }[] };
   extra: { label: string; title: string; body: string; note: string; cta: string; only: string; badge: string };
   destinos: { label: string; h: string; em: string; desc: string; items: Record<DestKey, { title: string; tag: string; desc: string }> };
@@ -35,7 +33,7 @@ export type Dict = {
   faq: { label: string; h: string; em: string; items: { q: string; a: string }[] };
   footer: {
     desc: string; col_destinos: string; col_activos: string; col_firma: string; col_contacto: string; col_legal: string;
-    firma_links: { firma: string; faq: string; vender: string; contacto: string };
+    firma_links: { firma: string; clientes: string; faq: string; vender: string; contacto: string };
     aviso: string; privacidad: string; cookies: string; rights: string;
   };
 };
@@ -51,16 +49,6 @@ const es: Dict = {
     rango: "Rango de inversión", continuar: "Continuar", cerrar: "Cerrar",
   },
   assetOptions: { edificio: "Edificio", hotel: "Hotel / Hospitality", residencial: "Residencial de lujo", terreno: "Solar / Terreno", singular: "Activo singular" },
-  activos: {
-    label: "Selección actual", title: "Activos destacados",
-    note: "Esta es la selección que podemos mostrar. Las operaciones que no aparecen aquí requieren una conversación.",
-    price: "Precio bajo consulta", prev: "Anterior", next: "Siguiente",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Residencia de diseño", meta: "Gran lujo · Interiorismo de autor" },
-    { tag: "Barcelona · Gràcia", title: "Ático con terraza privada", meta: "Terraza · Piscina · Vistas" },
-    { tag: "Madrid · Plaza Mayor", title: "Piso señorial reformado", meta: "Centro histórico · Diseño contemporáneo" },
-  ],
   tipologias: {
     label: "Tipologías", h: "Qué", em: "gestionamos",
     items: [
@@ -94,7 +82,7 @@ const es: Dict = {
   },
   firma: {
     label: "La firma", h: "Intermediación en", em: "operaciones off-market de alto valor",
-    body: "Intermediación exclusiva en activos inmobiliarios fuera de mercado. Edificios, hoteles, residencial de lujo y activos singulares entre 1M€ y 200M€. Acceso directo a oportunidades que se mueven entre profesionales bajo acuerdo de confidencialidad.",
+    body: "Intermediación exclusiva en activos inmobiliarios fuera de mercado. Edificios, hoteles, residencial de lujo y activos singulares desde 700.000 € hasta 200 M€. Acceso directo a oportunidades que se mueven entre profesionales bajo acuerdo de confidencialidad.",
     btn_contacto: "Hablemos", btn_valoracion: "Solicitar valoración",
   },
   vender: {
@@ -119,7 +107,7 @@ const es: Dict = {
       { q: "¿Qué es una operación off-market?", a: "Una compraventa que se negocia de forma privada, sin publicarse en portales ni en medios. El activo solo se presenta a compradores cualificados, identificados previamente y bajo acuerdo de confidencialidad." },
       { q: "¿Por qué vender fuera de mercado?", a: "Discreción y control. Sin exposición pública el activo no se desgasta, no hay rebajas visibles y el propietario decide quién accede a la información. Se evitan visitas no cualificadas y ruido innecesario." },
       { q: "¿Cómo es el proceso?", a: "Una primera conversación para entender el activo o la necesidad de inversión. Después, firma de confidencialidad, análisis y valoración, presentación selectiva a contrapartes verificadas y acompañamiento hasta la firma." },
-      { q: "¿Qué activos y rangos gestionan?", a: "Edificios completos, hoteles y cadenas hoteleras, residencial de lujo, solares, terrenos y activos singulares, en operaciones de 1M€ a 200M€. Foco en Madrid, con operaciones en España e internacionales." },
+      { q: "¿Qué activos y rangos gestionan?", a: "Edificios completos, hoteles y cadenas hoteleras, residencial de lujo, solares, terrenos y activos singulares, en operaciones desde 700.000 € hasta 200 M€. Foco en Madrid, con operaciones en España e internacionales." },
       { q: "¿Cómo se protege la confidencialidad?", a: "La información sensible de cada operación solo se comparte tras la firma de un acuerdo de confidencialidad (NDA). Los datos de cada contacto se tratan de forma privada y no se ceden a terceros sin autorización." },
       { q: "¿También operan con yates y aviones?", a: "Sí. Compraventa y chárter de yates, aviación privada y otros activos de alto valor, siempre bajo cita previa y con el mismo nivel de discreción." },
     ],
@@ -127,7 +115,7 @@ const es: Dict = {
   footer: {
     desc: "Intermediación en operaciones inmobiliarias off-market de alto valor. Madrid, España e internacional.",
     col_destinos: "Destinos", col_activos: "Activos", col_firma: "La firma", col_contacto: "Contacto", col_legal: "Legal",
-    firma_links: { firma: "La firma", faq: "Preguntas frecuentes", vender: "Vender", contacto: "Contacto" },
+    firma_links: { clientes: "Con quién trabajamos", firma: "La firma", faq: "Preguntas frecuentes", vender: "Vender", contacto: "Contacto" },
     aviso: "Aviso legal", privacidad: "Política de privacidad", cookies: "Política de cookies", rights: "Todos los derechos reservados",
   },
 };
@@ -143,16 +131,6 @@ const en: Dict = {
     rango: "Investment range", continuar: "Continue", cerrar: "Close",
   },
   assetOptions: { edificio: "Building", hotel: "Hotel / Hospitality", residencial: "Luxury residential", terreno: "Plot / Land", singular: "Singular asset" },
-  activos: {
-    label: "Current selection", title: "Featured assets",
-    note: "This is the selection we can show. Transactions not listed here require a conversation.",
-    price: "Price on request", prev: "Previous", next: "Next",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Design residence", meta: "Prime luxury · Signature interiors" },
-    { tag: "Barcelona · Gràcia", title: "Penthouse with private terrace", meta: "Terrace · Pool · Views" },
-    { tag: "Madrid · Plaza Mayor", title: "Refurbished stately apartment", meta: "Historic centre · Contemporary design" },
-  ],
   tipologias: {
     label: "Categories", h: "What we", em: "handle",
     items: [
@@ -186,7 +164,7 @@ const en: Dict = {
   },
   firma: {
     label: "The firm", h: "Intermediary in", em: "high-value off-market transactions",
-    body: "Exclusive intermediation in off-market real estate. Buildings, hotels, luxury residential and singular assets between €1M and €200M. Direct access to opportunities that move between professionals under confidentiality agreements.",
+    body: "Exclusive intermediation in off-market real estate. Buildings, hotels, luxury residential and singular assets from €700,000 to €200M. Direct access to opportunities that move between professionals under confidentiality agreements.",
     btn_contacto: "Let's talk", btn_valoracion: "Request valuation",
   },
   vender: {
@@ -211,7 +189,7 @@ const en: Dict = {
       { q: "What is an off-market transaction?", a: "A sale negotiated privately, never published on portals or in the media. The asset is only presented to qualified, pre-identified buyers under a confidentiality agreement." },
       { q: "Why sell off-market?", a: "Discretion and control. Without public exposure the asset is not overexposed, there are no visible price cuts and the owner decides who accesses the information." },
       { q: "What does the process look like?", a: "A first conversation to understand the asset or investment need. Then NDA, analysis and valuation, selective presentation to verified counterparties and support through to signing." },
-      { q: "Which assets and ranges do you cover?", a: "Entire buildings, hotels and hotel chains, luxury residential, plots, land and singular assets, in transactions from €1M to €200M. Focus on Madrid, with deals across Spain and abroad." },
+      { q: "Which assets and ranges do you cover?", a: "Entire buildings, hotels and hotel chains, luxury residential, plots, land and singular assets, in transactions from €700,000 to €200M. Focus on Madrid, with deals across Spain and abroad." },
       { q: "How is confidentiality protected?", a: "Sensitive information is only shared after an NDA is signed. Contact details are handled privately and never passed to third parties without consent." },
       { q: "Do you also handle yachts and aircraft?", a: "Yes. Sale, purchase and charter of yachts, private aviation and other high-value assets, by appointment and with the same level of discretion." },
     ],
@@ -219,7 +197,7 @@ const en: Dict = {
   footer: {
     desc: "Intermediary for high-value off-market real estate. Madrid, Spain & international.",
     col_destinos: "Locations", col_activos: "Assets", col_firma: "The firm", col_contacto: "Contact", col_legal: "Legal",
-    firma_links: { firma: "The firm", faq: "FAQ", vender: "Sell", contacto: "Contact" },
+    firma_links: { clientes: "Who we work with", firma: "The firm", faq: "FAQ", vender: "Sell", contacto: "Contact" },
     aviso: "Legal notice", privacidad: "Privacy policy", cookies: "Cookie policy", rights: "All rights reserved",
   },
 };
@@ -235,16 +213,6 @@ const fr: Dict = {
     rango: "Tranche d'investissement", continuar: "Continuer", cerrar: "Fermer",
   },
   assetOptions: { edificio: "Immeuble", hotel: "Hôtel / Hospitality", residencial: "Résidentiel de luxe", terreno: "Parcelle / Terrain", singular: "Actif singulier" },
-  activos: {
-    label: "Sélection actuelle", title: "Actifs en vedette",
-    note: "Voici la sélection que nous pouvons montrer. Les opérations qui n'apparaissent pas ici exigent une conversation.",
-    price: "Prix sur demande", prev: "Précédent", next: "Suivant",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Résidence de design", meta: "Grand luxe · Architecture d'intérieur signée" },
-    { tag: "Barcelone · Gràcia", title: "Penthouse avec terrasse privée", meta: "Terrasse · Piscine · Vue" },
-    { tag: "Madrid · Plaza Mayor", title: "Appartement de maître rénové", meta: "Centre historique · Design contemporain" },
-  ],
   tipologias: {
     label: "Typologies", h: "Ce que nous", em: "gérons",
     items: [
@@ -278,7 +246,7 @@ const fr: Dict = {
   },
   firma: {
     label: "La firme", h: "Intermédiation en", em: "opérations off-market de haute valeur",
-    body: "Intermédiation exclusive d'actifs immobiliers hors marché. Immeubles, hôtels, résidentiel de luxe et actifs singuliers entre 1 M€ et 200 M€. Accès direct à des opportunités qui circulent entre professionnels sous accord de confidentialité.",
+    body: "Intermédiation exclusive d'actifs immobiliers hors marché. Immeubles, hôtels, résidentiel de luxe et actifs singuliers de 700 000 € à 200 M€. Accès direct à des opportunités qui circulent entre professionnels sous accord de confidentialité.",
     btn_contacto: "Parlons-en", btn_valoracion: "Demander une évaluation",
   },
   vender: {
@@ -303,7 +271,7 @@ const fr: Dict = {
       { q: "Qu'est-ce qu'une opération off-market ?", a: "Une transaction négociée en privé, sans publication sur les portails ni dans les médias. L'actif n'est présenté qu'à des acheteurs qualifiés, identifiés au préalable et sous accord de confidentialité." },
       { q: "Pourquoi vendre hors marché ?", a: "Discrétion et contrôle. Sans exposition publique, l'actif ne s'use pas, aucune baisse de prix n'est visible et le propriétaire décide qui accède à l'information." },
       { q: "Comment se déroule le processus ?", a: "Un premier échange pour comprendre l'actif ou le besoin d'investissement. Puis NDA, analyse et évaluation, présentation sélective à des contreparties vérifiées et accompagnement jusqu'à la signature." },
-      { q: "Quels actifs et quelles tranches ?", a: "Immeubles entiers, hôtels et chaînes hôtelières, résidentiel de luxe, parcelles, terrains et actifs singuliers, pour des opérations de 1 M€ à 200 M€. Priorité à Madrid, avec des opérations en Espagne et à l'international." },
+      { q: "Quels actifs et quelles tranches ?", a: "Immeubles entiers, hôtels et chaînes hôtelières, résidentiel de luxe, parcelles, terrains et actifs singuliers, pour des opérations de 700 000 € à 200 M€. Priorité à Madrid, avec des opérations en Espagne et à l'international." },
       { q: "Comment la confidentialité est-elle protégée ?", a: "Les informations sensibles ne sont partagées qu'après signature d'un accord de confidentialité (NDA). Les données de contact sont traitées de manière privée et jamais cédées sans autorisation." },
       { q: "Traitez-vous aussi les yachts et les avions ?", a: "Oui. Achat, vente et affrètement de yachts, aviation privée et autres actifs de haute valeur, sur rendez-vous et avec la même discrétion." },
     ],
@@ -311,7 +279,7 @@ const fr: Dict = {
   footer: {
     desc: "Intermédiaire en opérations immobilières off-market de haute valeur. Madrid, Espagne & international.",
     col_destinos: "Destinations", col_activos: "Actifs", col_firma: "La firme", col_contacto: "Contact", col_legal: "Mentions",
-    firma_links: { firma: "La firme", faq: "Questions fréquentes", vender: "Vendre", contacto: "Contact" },
+    firma_links: { clientes: "Avec qui nous travaillons", firma: "La firme", faq: "Questions fréquentes", vender: "Vendre", contacto: "Contact" },
     aviso: "Mentions légales", privacidad: "Politique de confidentialité", cookies: "Politique de cookies", rights: "Tous droits réservés",
   },
 };
@@ -327,16 +295,6 @@ const de: Dict = {
     rango: "Investitionsrahmen", continuar: "Weiter", cerrar: "Schließen",
   },
   assetOptions: { edificio: "Gebäude", hotel: "Hotel / Hospitality", residencial: "Luxuswohnimmobilie", terreno: "Grundstück", singular: "Besonderes Objekt" },
-  activos: {
-    label: "Aktuelle Auswahl", title: "Ausgewählte Objekte",
-    note: "Dies ist die Auswahl, die wir zeigen können. Alle anderen Transaktionen erfordern ein persönliches Gespräch.",
-    price: "Preis auf Anfrage", prev: "Zurück", next: "Weiter",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Design-Residenz", meta: "Luxus · Innenarchitektur mit Handschrift" },
-    { tag: "Barcelona · Gràcia", title: "Penthouse mit privater Terrasse", meta: "Terrasse · Pool · Ausblick" },
-    { tag: "Madrid · Plaza Mayor", title: "Renovierte Altbauwohnung", meta: "Historisches Zentrum · Zeitgenössisches Design" },
-  ],
   tipologias: {
     label: "Kategorien", h: "Was wir", em: "betreuen",
     items: [
@@ -370,7 +328,7 @@ const de: Dict = {
   },
   firma: {
     label: "Über uns", h: "Vermittlung von", em: "hochwertigen Off-Market-Transaktionen",
-    body: "Exklusive Vermittlung von Immobilien außerhalb des Marktes. Gebäude, Hotels, Luxuswohnimmobilien und besondere Objekte zwischen 1 Mio. € und 200 Mio. €. Direkter Zugang zu Gelegenheiten, die unter Fachleuten und unter Vertraulichkeitsvereinbarung gehandelt werden.",
+    body: "Exklusive Vermittlung von Immobilien außerhalb des Marktes. Gebäude, Hotels, Luxuswohnimmobilien und besondere Objekte von 700.000 € bis 200 Mio. €. Direkter Zugang zu Gelegenheiten, die unter Fachleuten und unter Vertraulichkeitsvereinbarung gehandelt werden.",
     btn_contacto: "Sprechen wir", btn_valoracion: "Bewertung anfragen",
   },
   vender: {
@@ -395,7 +353,7 @@ const de: Dict = {
       { q: "Was ist eine Off-Market-Transaktion?", a: "Ein Verkauf, der privat verhandelt und weder auf Portalen noch in Medien veröffentlicht wird. Das Objekt wird nur qualifizierten, vorab identifizierten Käufern unter Vertraulichkeitsvereinbarung vorgestellt." },
       { q: "Warum außerhalb des Marktes verkaufen?", a: "Diskretion und Kontrolle. Ohne öffentliche Präsenz verliert das Objekt nicht an Wert, es gibt keine sichtbaren Preissenkungen und der Eigentümer entscheidet, wer Informationen erhält." },
       { q: "Wie läuft der Prozess ab?", a: "Ein erstes Gespräch, um das Objekt oder den Investitionsbedarf zu verstehen. Danach NDA, Analyse und Bewertung, gezielte Vorstellung bei geprüften Gegenparteien und Begleitung bis zur Unterzeichnung." },
-      { q: "Welche Objekte und Volumina betreuen Sie?", a: "Komplette Gebäude, Hotels und Hotelketten, Luxuswohnimmobilien, Grundstücke und besondere Objekte, in Transaktionen von 1 Mio. € bis 200 Mio. €. Schwerpunkt Madrid, mit Geschäften in Spanien und international." },
+      { q: "Welche Objekte und Volumina betreuen Sie?", a: "Komplette Gebäude, Hotels und Hotelketten, Luxuswohnimmobilien, Grundstücke und besondere Objekte, in Transaktionen von 700.000 € bis 200 Mio. €. Schwerpunkt Madrid, mit Geschäften in Spanien und international." },
       { q: "Wie wird die Vertraulichkeit geschützt?", a: "Sensible Informationen werden erst nach Unterzeichnung einer Vertraulichkeitsvereinbarung (NDA) geteilt. Kontaktdaten werden privat behandelt und ohne Zustimmung nicht weitergegeben." },
       { q: "Betreuen Sie auch Yachten und Flugzeuge?", a: "Ja. Kauf, Verkauf und Charter von Yachten, Privatflugzeugen und anderen hochwertigen Vermögenswerten, nach Vereinbarung und mit derselben Diskretion." },
     ],
@@ -403,7 +361,7 @@ const de: Dict = {
   footer: {
     desc: "Vermittlung hochwertiger Off-Market-Immobilien. Madrid, Spanien & international.",
     col_destinos: "Standorte", col_activos: "Objekte", col_firma: "Über uns", col_contacto: "Kontakt", col_legal: "Rechtliches",
-    firma_links: { firma: "Über uns", faq: "Häufige Fragen", vender: "Verkaufen", contacto: "Kontakt" },
+    firma_links: { clientes: "Mit wem wir arbeiten", firma: "Über uns", faq: "Häufige Fragen", vender: "Verkaufen", contacto: "Kontakt" },
     aviso: "Impressum", privacidad: "Datenschutz", cookies: "Cookie-Richtlinie", rights: "Alle Rechte vorbehalten",
   },
 };
@@ -419,16 +377,6 @@ const it: Dict = {
     rango: "Range di investimento", continuar: "Continua", cerrar: "Chiudi",
   },
   assetOptions: { edificio: "Edificio", hotel: "Hotel / Hospitality", residencial: "Residenziale di lusso", terreno: "Lotto / Terreno", singular: "Attivo singolare" },
-  activos: {
-    label: "Selezione attuale", title: "Attivi in evidenza",
-    note: "Questa è la selezione che possiamo mostrare. Le operazioni che non compaiono qui richiedono una conversazione.",
-    price: "Prezzo su richiesta", prev: "Precedente", next: "Successivo",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Residenza di design", meta: "Gran lusso · Interni d'autore" },
-    { tag: "Barcellona · Gràcia", title: "Attico con terrazza privata", meta: "Terrazza · Piscina · Vista" },
-    { tag: "Madrid · Plaza Mayor", title: "Appartamento signorile ristrutturato", meta: "Centro storico · Design contemporaneo" },
-  ],
   tipologias: {
     label: "Tipologie", h: "Cosa", em: "gestiamo",
     items: [
@@ -462,7 +410,7 @@ const it: Dict = {
   },
   firma: {
     label: "La firma", h: "Intermediazione in", em: "operazioni off-market di alto valore",
-    body: "Intermediazione esclusiva in attivi immobiliari fuori mercato. Edifici, hotel, residenziale di lusso e attivi singolari tra 1 M€ e 200 M€. Accesso diretto a opportunità che circolano tra professionisti sotto accordo di riservatezza.",
+    body: "Intermediazione esclusiva in attivi immobiliari fuori mercato. Edifici, hotel, residenziale di lusso e attivi singolari da 700.000 € a 200 M€. Accesso diretto a opportunità che circolano tra professionisti sotto accordo di riservatezza.",
     btn_contacto: "Parliamone", btn_valoracion: "Richiedi valutazione",
   },
   vender: {
@@ -487,7 +435,7 @@ const it: Dict = {
       { q: "Che cos'è un'operazione off-market?", a: "Una compravendita negoziata in forma privata, senza pubblicazione su portali o media. L'attivo viene presentato solo ad acquirenti qualificati, identificati in anticipo e sotto accordo di riservatezza." },
       { q: "Perché vendere fuori mercato?", a: "Discrezione e controllo. Senza esposizione pubblica l'attivo non si logora, non ci sono ribassi visibili e il proprietario decide chi accede alle informazioni." },
       { q: "Come si svolge il processo?", a: "Un primo colloquio per capire l'attivo o l'esigenza di investimento. Poi NDA, analisi e valutazione, presentazione selettiva a controparti verificate e affiancamento fino alla firma." },
-      { q: "Quali attivi e quali importi?", a: "Edifici interi, hotel e catene alberghiere, residenziale di lusso, lotti, terreni e attivi singolari, in operazioni da 1 M€ a 200 M€. Focus su Madrid, con operazioni in Spagna e all'estero." },
+      { q: "Quali attivi e quali importi?", a: "Edifici interi, hotel e catene alberghiere, residenziale di lusso, lotti, terreni e attivi singolari, in operazioni da 700.000 € a 200 M€. Focus su Madrid, con operazioni in Spagna e all'estero." },
       { q: "Come viene tutelata la riservatezza?", a: "Le informazioni sensibili vengono condivise solo dopo la firma di un accordo di riservatezza (NDA). I dati di contatto sono trattati privatamente e mai ceduti senza autorizzazione." },
       { q: "Trattate anche yacht e aerei?", a: "Sì. Compravendita e charter di yacht, aviazione privata e altri beni di alto valore, su appuntamento e con la stessa discrezione." },
     ],
@@ -495,7 +443,7 @@ const it: Dict = {
   footer: {
     desc: "Intermediazione in operazioni immobiliari off-market di alto valore. Madrid, Spagna e internazionale.",
     col_destinos: "Destinazioni", col_activos: "Attivi", col_firma: "La firma", col_contacto: "Contatto", col_legal: "Note legali",
-    firma_links: { firma: "La firma", faq: "Domande frequenti", vender: "Vendere", contacto: "Contatto" },
+    firma_links: { clientes: "Con chi lavoriamo", firma: "La firma", faq: "Domande frequenti", vender: "Vendere", contacto: "Contatto" },
     aviso: "Note legali", privacidad: "Privacy policy", cookies: "Cookie policy", rights: "Tutti i diritti riservati",
   },
 };
@@ -511,16 +459,6 @@ const pt: Dict = {
     rango: "Gama de investimento", continuar: "Continuar", cerrar: "Fechar",
   },
   assetOptions: { edificio: "Edifício", hotel: "Hotel / Hospitality", residencial: "Residencial de luxo", terreno: "Lote / Terreno", singular: "Ativo singular" },
-  activos: {
-    label: "Seleção atual", title: "Ativos em destaque",
-    note: "Esta é a seleção que podemos mostrar. As operações que não aparecem aqui exigem uma conversa.",
-    price: "Preço sob consulta", prev: "Anterior", next: "Seguinte",
-  },
-  properties: [
-    { tag: "Madrid · Chueca", title: "Residência de design", meta: "Grande luxo · Interiores de autor" },
-    { tag: "Barcelona · Gràcia", title: "Penthouse com terraço privado", meta: "Terraço · Piscina · Vistas" },
-    { tag: "Madrid · Plaza Mayor", title: "Apartamento senhorial renovado", meta: "Centro histórico · Design contemporâneo" },
-  ],
   tipologias: {
     label: "Tipologias", h: "O que", em: "gerimos",
     items: [
@@ -554,7 +492,7 @@ const pt: Dict = {
   },
   firma: {
     label: "A firma", h: "Intermediação em", em: "operações off-market de alto valor",
-    body: "Intermediação exclusiva em ativos imobiliários fora de mercado. Edifícios, hotéis, residencial de luxo e ativos singulares entre 1 M€ e 200 M€. Acesso direto a oportunidades que circulam entre profissionais sob acordo de confidencialidade.",
+    body: "Intermediação exclusiva em ativos imobiliários fora de mercado. Edifícios, hotéis, residencial de luxo e ativos singulares de 700.000 € a 200 M€. Acesso direto a oportunidades que circulam entre profissionais sob acordo de confidencialidade.",
     btn_contacto: "Falemos", btn_valoracion: "Solicitar avaliação",
   },
   vender: {
@@ -579,7 +517,7 @@ const pt: Dict = {
       { q: "O que é uma operação off-market?", a: "Uma compra e venda negociada de forma privada, sem publicação em portais ou meios de comunicação. O ativo só é apresentado a compradores qualificados, identificados previamente e sob acordo de confidencialidade." },
       { q: "Porquê vender fora de mercado?", a: "Discrição e controlo. Sem exposição pública, o ativo não se desgasta, não há descidas de preço visíveis e o proprietário decide quem acede à informação." },
       { q: "Como é o processo?", a: "Uma primeira conversa para perceber o ativo ou a necessidade de investimento. Depois, NDA, análise e avaliação, apresentação seletiva a contrapartes verificadas e acompanhamento até à escritura." },
-      { q: "Que ativos e montantes gerem?", a: "Edifícios completos, hotéis e cadeias hoteleiras, residencial de luxo, lotes, terrenos e ativos singulares, em operações de 1 M€ a 200 M€. Foco em Madrid, com operações em Espanha e no estrangeiro." },
+      { q: "Que ativos e montantes gerem?", a: "Edifícios completos, hotéis e cadeias hoteleiras, residencial de luxo, lotes, terrenos e ativos singulares, em operações de 700.000 € a 200 M€. Foco em Madrid, com operações em Espanha e no estrangeiro." },
       { q: "Como se protege a confidencialidade?", a: "A informação sensível só é partilhada após a assinatura de um acordo de confidencialidade (NDA). Os dados de contacto são tratados de forma privada e nunca cedidos sem autorização." },
       { q: "Também trabalham com iates e aviões?", a: "Sim. Compra, venda e fretamento de iates, aviação privada e outros ativos de alto valor, mediante marcação e com a mesma discrição." },
     ],
@@ -587,7 +525,7 @@ const pt: Dict = {
   footer: {
     desc: "Intermediação em operações imobiliárias off-market de alto valor. Madrid, Espanha e internacional.",
     col_destinos: "Destinos", col_activos: "Ativos", col_firma: "A firma", col_contacto: "Contacto", col_legal: "Legal",
-    firma_links: { firma: "A firma", faq: "Perguntas frequentes", vender: "Vender", contacto: "Contacto" },
+    firma_links: { clientes: "Com quem trabalhamos", firma: "A firma", faq: "Perguntas frequentes", vender: "Vender", contacto: "Contacto" },
     aviso: "Aviso legal", privacidad: "Política de privacidade", cookies: "Política de cookies", rights: "Todos os direitos reservados",
   },
 };
@@ -603,16 +541,6 @@ const ru: Dict = {
     rango: "Объём инвестиций", continuar: "Продолжить", cerrar: "Закрыть",
   },
   assetOptions: { edificio: "Здание", hotel: "Отель / Hospitality", residencial: "Элитное жильё", terreno: "Участок / Земля", singular: "Уникальный актив" },
-  activos: {
-    label: "Текущая подборка", title: "Избранные активы",
-    note: "Это подборка, которую мы можем показать. Остальные сделки обсуждаются лично.",
-    price: "Цена по запросу", prev: "Назад", next: "Далее",
-  },
-  properties: [
-    { tag: "Мадрид · Чуэка", title: "Дизайнерская резиденция", meta: "Премиум · Авторский интерьер" },
-    { tag: "Барселона · Грасия", title: "Пентхаус с частной террасой", meta: "Терраса · Бассейн · Виды" },
-    { tag: "Мадрид · Пласа-Майор", title: "Отреставрированная квартира", meta: "Исторический центр · Современный дизайн" },
-  ],
   tipologias: {
     label: "Категории", h: "С чем мы", em: "работаем",
     items: [
@@ -646,7 +574,7 @@ const ru: Dict = {
   },
   firma: {
     label: "О компании", h: "Посредничество в", em: "крупных внерыночных сделках",
-    body: "Эксклюзивное посредничество во внерыночных сделках с недвижимостью. Здания, отели, элитное жильё и уникальные активы стоимостью от 1 до 200 млн €. Прямой доступ к возможностям, которые передаются между профессионалами по соглашению о конфиденциальности.",
+    body: "Эксклюзивное посредничество во внерыночных сделках с недвижимостью. Здания, отели, элитное жильё и уникальные активы стоимостью от 700 000 € до 200 млн €. Прямой доступ к возможностям, которые передаются между профессионалами по соглашению о конфиденциальности.",
     btn_contacto: "Обсудить", btn_valoracion: "Запросить оценку",
   },
   vender: {
@@ -671,7 +599,7 @@ const ru: Dict = {
       { q: "Что такое внерыночная (off-market) сделка?", a: "Сделка, которая ведётся конфиденциально, без публикации на порталах и в СМИ. Объект представляется только заранее проверенным квалифицированным покупателям по соглашению о конфиденциальности." },
       { q: "Зачем продавать вне рынка?", a: "Конфиденциальность и контроль. Без публичности объект не «выгорает», нет видимых снижений цены, а владелец сам решает, кто получает информацию." },
       { q: "Как устроен процесс?", a: "Первый разговор, чтобы понять объект или инвестиционную задачу. Затем NDA, анализ и оценка, адресная презентация проверенным контрагентам и сопровождение до подписания." },
-      { q: "С какими активами и объёмами вы работаете?", a: "Целые здания, отели и гостиничные сети, элитное жильё, участки, земля и уникальные активы — сделки от 1 до 200 млн €. Фокус на Мадриде, а также сделки в Испании и за рубежом." },
+      { q: "С какими активами и объёмами вы работаете?", a: "Целые здания, отели и гостиничные сети, элитное жильё, участки, земля и уникальные активы — сделки от 700 000 € до 200 млн €. Фокус на Мадриде, а также сделки в Испании и за рубежом." },
       { q: "Как обеспечивается конфиденциальность?", a: "Чувствительная информация передаётся только после подписания соглашения о конфиденциальности (NDA). Контактные данные не передаются третьим лицам без согласия." },
       { q: "Вы работаете с яхтами и самолётами?", a: "Да. Покупка, продажа и чартер яхт, частная авиация и другие ценные активы — по предварительной записи и с той же конфиденциальностью." },
     ],
@@ -679,7 +607,7 @@ const ru: Dict = {
   footer: {
     desc: "Посредничество в крупных внерыночных сделках с недвижимостью. Мадрид, Испания и международный рынок.",
     col_destinos: "Направления", col_activos: "Активы", col_firma: "О компании", col_contacto: "Контакт", col_legal: "Правовая информация",
-    firma_links: { firma: "О компании", faq: "Частые вопросы", vender: "Продать", contacto: "Контакт" },
+    firma_links: { clientes: "С кем мы работаем", firma: "О компании", faq: "Частые вопросы", vender: "Продать", contacto: "Контакт" },
     aviso: "Правовая информация", privacidad: "Политика конфиденциальности", cookies: "Политика cookies", rights: "Все права защищены",
   },
 };
@@ -695,16 +623,6 @@ const ar: Dict = {
     rango: "نطاق الاستثمار", continuar: "متابعة", cerrar: "إغلاق",
   },
   assetOptions: { edificio: "مبنى", hotel: "فندق / ضيافة", residencial: "سكني فاخر", terreno: "قطعة أرض", singular: "أصل فريد" },
-  activos: {
-    label: "الاختيار الحالي", title: "الأصول المميزة",
-    note: "هذا ما يمكننا عرضه. الصفقات غير المعروضة هنا تتطلب محادثة خاصة.",
-    price: "السعر عند الطلب", prev: "السابق", next: "التالي",
-  },
-  properties: [
-    { tag: "مدريد · تشويكا", title: "مسكن بتصميم مميز", meta: "فخامة عالية · تصميم داخلي مميز" },
-    { tag: "برشلونة · غراسيا", title: "بنتهاوس مع شرفة خاصة", meta: "شرفة · مسبح · إطلالات" },
-    { tag: "مدريد · بلازا مايور", title: "شقة كلاسيكية مجددة", meta: "المركز التاريخي · تصميم معاصر" },
-  ],
   tipologias: {
     label: "الفئات", h: "ما", em: "نديره",
     items: [
@@ -738,7 +656,7 @@ const ar: Dict = {
   },
   firma: {
     label: "عن الشركة", h: "وساطة في", em: "صفقات خارج السوق عالية القيمة",
-    body: "وساطة حصرية في الأصول العقارية خارج السوق. مبانٍ وفنادق وعقارات سكنية فاخرة وأصول فريدة بين مليون و200 مليون يورو. وصول مباشر إلى فرص تتداول بين المحترفين بموجب اتفاقية سرية.",
+    body: "وساطة حصرية في الأصول العقارية خارج السوق. مبانٍ وفنادق وعقارات سكنية فاخرة وأصول فريدة من 700,000 يورو حتى 200 مليون يورو. وصول مباشر إلى فرص تتداول بين المحترفين بموجب اتفاقية سرية.",
     btn_contacto: "لنتحدث", btn_valoracion: "طلب تقييم",
   },
   vender: {
@@ -763,7 +681,7 @@ const ar: Dict = {
       { q: "ما هي الصفقة خارج السوق؟", a: "عملية بيع تُفاوض بشكل خاص دون نشرها في البوابات أو وسائل الإعلام. لا يُعرض الأصل إلا على مشترين مؤهلين ومحددين مسبقاً بموجب اتفاقية سرية." },
       { q: "لماذا البيع خارج السوق؟", a: "السرية والتحكم. بدون ظهور علني لا يفقد الأصل قيمته، ولا توجد تخفيضات سعرية ظاهرة، ويقرر المالك من يطّلع على المعلومات." },
       { q: "كيف تسير العملية؟", a: "محادثة أولى لفهم الأصل أو الاحتياج الاستثماري، ثم اتفاقية سرية، وتحليل وتقييم، وعرض انتقائي على أطراف موثوقة، ومرافقة حتى التوقيع." },
-      { q: "ما الأصول والنطاقات التي تديرونها؟", a: "مبانٍ كاملة وفنادق وسلاسل فندقية وعقارات سكنية فاخرة وأراضٍ وأصول فريدة، في صفقات من مليون إلى 200 مليون يورو. التركيز على مدريد مع صفقات في إسبانيا وخارجها." },
+      { q: "ما الأصول والنطاقات التي تديرونها؟", a: "مبانٍ كاملة وفنادق وسلاسل فندقية وعقارات سكنية فاخرة وأراضٍ وأصول فريدة، في صفقات من 700,000 يورو إلى 200 مليون يورو. التركيز على مدريد مع صفقات في إسبانيا وخارجها." },
       { q: "كيف تتم حماية السرية؟", a: "لا تُشارك المعلومات الحساسة إلا بعد توقيع اتفاقية سرية. تُعالج بيانات الاتصال بشكل خاص ولا تُشارك مع أطراف ثالثة دون إذن." },
       { q: "هل تعملون أيضاً في اليخوت والطائرات؟", a: "نعم. شراء وبيع واستئجار اليخوت والطيران الخاص وغيرها من الأصول عالية القيمة، بموعد مسبق وبنفس مستوى السرية." },
     ],
@@ -771,7 +689,7 @@ const ar: Dict = {
   footer: {
     desc: "وساطة في صفقات العقارات خارج السوق عالية القيمة. مدريد، إسبانيا والسوق الدولي.",
     col_destinos: "الوجهات", col_activos: "الأصول", col_firma: "عن الشركة", col_contacto: "اتصل", col_legal: "قانوني",
-    firma_links: { firma: "عن الشركة", faq: "الأسئلة الشائعة", vender: "البيع", contacto: "اتصل" },
+    firma_links: { clientes: "مع من نعمل", firma: "عن الشركة", faq: "الأسئلة الشائعة", vender: "البيع", contacto: "اتصل" },
     aviso: "إشعار قانوني", privacidad: "سياسة الخصوصية", cookies: "سياسة ملفات تعريف الارتباط", rights: "جميع الحقوق محفوظة",
   },
 };
@@ -787,16 +705,6 @@ const zh: Dict = {
     rango: "投资范围", continuar: "继续", cerrar: "关闭",
   },
   assetOptions: { edificio: "整栋建筑", hotel: "酒店", residencial: "豪华住宅", terreno: "地块 / 土地", singular: "特色资产" },
-  activos: {
-    label: "当前精选", title: "精选资产",
-    note: "以上是可以公开展示的部分。其余交易需当面沟通。",
-    price: "价格面议", prev: "上一个", next: "下一个",
-  },
-  properties: [
-    { tag: "马德里 · Chueca", title: "设计师住宅", meta: "顶级豪宅 · 名家室内设计" },
-    { tag: "巴塞罗那 · Gràcia", title: "带私人露台的顶层公寓", meta: "露台 · 泳池 · 景观" },
-    { tag: "马德里 · 马约尔广场", title: "翻新古典公寓", meta: "历史中心 · 当代设计" },
-  ],
   tipologias: {
     label: "类别", h: "我们", em: "经营的资产",
     items: [
@@ -830,7 +738,7 @@ const zh: Dict = {
   },
   firma: {
     label: "关于我们", h: "专注于", em: "高价值场外交易中介",
-    body: "场外房地产资产的独家中介。整栋建筑、酒店、豪华住宅及特色资产，交易金额100万至2亿欧元。在保密协议下，直接接触专业人士之间流通的机会。",
+    body: "场外房地产资产的独家中介。整栋建筑、酒店、豪华住宅及特色资产，交易金额70万至2亿欧元。在保密协议下，直接接触专业人士之间流通的机会。",
     btn_contacto: "洽谈", btn_valoracion: "申请估值",
   },
   vender: {
@@ -855,7 +763,7 @@ const zh: Dict = {
       { q: "什么是场外（off-market）交易？", a: "以私密方式洽谈、不在任何平台或媒体上公开的买卖。资产仅在保密协议下向事先确认的合格买家展示。" },
       { q: "为什么选择场外出售？", a: "保密与掌控。没有公开曝光，资产不会被过度消耗，不会出现可见的降价，业主决定谁能获取信息。" },
       { q: "流程是怎样的？", a: "首先沟通了解资产或投资需求，然后签署保密协议、分析估值、向经核实的交易对手定向展示，并全程陪同至签约。" },
-      { q: "经营哪些资产和金额范围？", a: "整栋建筑、酒店及连锁酒店、豪华住宅、地块、土地及特色资产，交易金额100万至2亿欧元。以马德里为核心，同时覆盖西班牙及海外。" },
+      { q: "经营哪些资产和金额范围？", a: "整栋建筑、酒店及连锁酒店、豪华住宅、地块、土地及特色资产，交易金额70万至2亿欧元。以马德里为核心，同时覆盖西班牙及海外。" },
       { q: "如何保障保密性？", a: "敏感信息仅在签署保密协议（NDA）后提供。联系人信息私密处理，未经授权不会提供给第三方。" },
       { q: "也经营游艇和飞机吗？", a: "是的。游艇、私人航空及其他高价值资产的买卖与包租，均需预约，保密标准相同。" },
     ],
@@ -863,7 +771,7 @@ const zh: Dict = {
   footer: {
     desc: "高价值场外房地产交易中介。马德里、西班牙及国际市场。",
     col_destinos: "目的地", col_activos: "资产", col_firma: "关于我们", col_contacto: "联系", col_legal: "法律信息",
-    firma_links: { firma: "关于我们", faq: "常见问题", vender: "出售", contacto: "联系" },
+    firma_links: { clientes: "我们的客户", firma: "关于我们", faq: "常见问题", vender: "出售", contacto: "联系" },
     aviso: "法律声明", privacidad: "隐私政策", cookies: "Cookie 政策", rights: "版权所有",
   },
 };

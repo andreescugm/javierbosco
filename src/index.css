@@ -80,3 +80,35 @@ input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Activos + Con quién trabajamos */
+.act-head { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(32px, 6vw, 110px); align-items: end; margin-bottom: clamp(56px, 6vw, 90px); }
+.act-filters { display: flex; gap: clamp(18px, 2.6vw, 40px); border-bottom: 1px solid #D5D0C8; margin-bottom: 40px; overflow-x: auto; scrollbar-width: none; }
+.act-filters::-webkit-scrollbar { display: none; }
+.act-head--stack { grid-template-columns: 1fr; gap: 36px; }
+.act-head--stack > p { justify-self: end; }
+.act-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 2vw, 28px); align-items: stretch; }
+.encargo { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 7vw, 120px); align-items: center; }
+.encargo-input::placeholder { color: rgba(245,242,235,0.38); }
+.prof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(36px, 4vw, 56px) clamp(24px, 4vw, 64px); }
+.situ-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(28px, 4vw, 64px); margin-top: 36px; }
+.ticket-scale { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); margin-top: 44px; }
+.ticket-line { position: absolute; left: 0; right: 0; top: 62px; height: 1px; background: linear-gradient(90deg, #A08C5B, #D5D0C8); }
+.ticket-node { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.ticket-dot { width: 9px; height: 9px; border-radius: 50%; background: #EAE7E0; border: 1px solid #A08C5B; position: relative; z-index: 1; }
+@media (max-width: 1080px) {
+  .act-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 820px) {
+  .act-head, .encargo { grid-template-columns: 1fr; align-items: start; }
+  .act-head--stack > p { justify-self: start; }
+  .prof-grid { grid-template-columns: repeat(2, 1fr); }
+  .situ-grid { grid-template-columns: 1fr; }
+  .ticket-scale { grid-template-columns: repeat(3, 1fr); row-gap: 36px; }
+  .ticket-line { display: none; }
+}
+@media (max-width: 640px) {
+  .act-grid { grid-template-columns: 1fr; }
+  .prof-grid { grid-template-columns: 1fr; }
+  .ticket-scale { grid-template-columns: repeat(2, 1fr); }
+}

@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import { CardStack } from "./components/CardStack";
 import { T, LANG_OPTIONS, isLang, type Lang, type Dict, type AssetKey, type DestKey } from "./i18n";
 import { LEGAL, EMAIL_PUBLICO, EMAIL_FORMULARIO, type LegalKey } from "./legal";
+import { ACT, ASSETS, TICKETS, formatPrice, type AssetCat, type AssetId } from "./activos";
 
 // ============================================
 // PALETA — web en modo claro (crema + oro apagado).
@@ -32,8 +33,8 @@ const ease = [0.25, 0.1, 0.25, 1] as const;
 const easeOut = [0.16, 1, 0.3, 1] as const;
 const VP = { once: true, amount: 0.15 } as const;
 
-// Rango de inversión: único para toda la web (1M€ – 200M€).
-const RANGES = ["1–5M€", "5–10M€", "10–20M€", "20–50M€", "50–100M€", "100–200M€"];
+// Rango de inversión: único para toda la web (desde 700.000 € hasta 200 M€).
+const RANGES = ["<1M€", "1–5M€", "5–10M€", "10–20M€", "20–50M€", "50–100M€", "100–200M€"];
 
 // ============================================
 // CONTEXTOS: idioma + solicitud (lo que el visitante elige en el buscador / vender)
@@ -41,7 +42,7 @@ const RANGES = ["1–5M€", "5–10M€", "10–20M€", "20–50M€", "50–1
 const LangContext = createContext<Lang>("es");
 function useT(): Dict { return T[useContext(LangContext)]; }
 
-type Lead = { operacion: "comprar" | "vender"; ubicacion?: string; tipo?: AssetKey | ""; rango?: string; direccion?: string } | null;
+type Lead = { operacion: "comprar" | "vender"; ubicacion?: string; tipo?: AssetKey | ""; rango?: string; direccion?: string; assetId?: AssetId; busqueda?: string } | null;
 const LeadContext = createContext<{ lead: Lead; setLead: (l: Lead) => void }>({ lead: null, setLead: () => {} });
 
 const LegalContext = createContext<(k: LegalKey) => void>(() => {});
@@ -167,74 +168,6 @@ function SmokeCanvas() {
     };
   }, []);
   return <canvas ref={ref} aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />;
-}
-
-// ============================================
-// DRAG CAROUSEL — 1 elemento, swipe/arrastre
-// ============================================
-const slideVariants: Variants = {
-  enter: (d: number) => ({ x: d * 200, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (d: number) => ({ x: -d * 200, opacity: 0 }),
-};
-function DragCarousel<I>({ items, renderItem, prevLabel, nextLabel }: { items: I[]; renderItem: (item: I, i: number) => ReactNode; prevLabel: string; nextLabel: string }) {
-  const [idx, setIdx] = useState(0);
-  const [dir, setDir] = useState(1);
-  const n = items.length;
-  const go = (d: number) => { setDir(d); setIdx(i => (i + d + n) % n); };
-  const btnBase = {
-    background: "rgba(10,8,5,0.55)", border: `1px solid ${C.goldLine}`,
-    borderRadius: "50%", width: 44, height: 44, cursor: "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.4s",
-  };
-  return (
-    <div style={{ position: "relative" }}>
-      <div style={{ overflow: "hidden", touchAction: "pan-y" }}>
-        <AnimatePresence mode="wait" custom={dir} initial={false}>
-          <motion.div
-            key={idx}
-            custom={dir}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.6, ease }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.12}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -50 || info.velocity.x < -400) go(1);
-              else if (info.offset.x > 50 || info.velocity.x > 400) go(-1);
-            }}
-            style={{ cursor: "grab" }}
-          >
-            {renderItem(items[idx], idx)}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-      <div style={{ position: "absolute", top: "32%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", justifyContent: "space-between", padding: "0 16px", pointerEvents: "none" }}>
-        {[{ d: -1, label: prevLabel, path: "M15 18l-6-6 6-6" }, { d: 1, label: nextLabel, path: "M9 18l6-6-6-6" }].map(b => (
-          <button key={b.d} type="button" aria-label={b.label} onClick={() => go(b.d)}
-            style={{ ...btnBase, pointerEvents: "auto" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = "rgba(10,8,5,0.75)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = C.goldLine; e.currentTarget.style.background = "rgba(10,8,5,0.55)"; }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5"><path d={b.path} /></svg>
-          </button>
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 28 }}>
-        {items.map((_, i) => (
-          <button key={i} type="button" aria-label={`${i + 1} / ${n}`} onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i); }}
-            style={{
-              width: idx === i ? 24 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer",
-              background: idx === i ? C.gold : C.blackBorder, transition: "all 0.5s cubic-bezier(0.25,0.1,0.25,1)",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 // ============================================
@@ -500,7 +433,7 @@ function SearchExpanded({ close }: { close: () => void }) {
   const [tab, setTab] = useState<"comprar" | "vender">("comprar");
   const [location, setLocation] = useState("");
   const [assetType, setAssetType] = useState<AssetKey | "">("");
-  const [slider, setSlider] = useState(2);
+  const [slider, setSlider] = useState(3);
   const submit = () => {
     setLead({ operacion: tab, ubicacion: location.trim(), tipo: assetType, rango: RANGES[Math.round(slider)] });
     scrollToId("contacto");
@@ -552,55 +485,246 @@ function SearchExpanded({ close }: { close: () => void }) {
 }
 
 // ============================================
-// ACTIVOS DESTACADOS
+// ACTIVOS — muestra orientativa ("Si alguien quiere algo, lo conseguimos")
 // ============================================
-const PROPERTY_IMAGES = ["/img/prop-chueca.webp", "/img/prop-gracia.webp", "/img/prop-plazamayor.webp"];
-function PropiedadesDestacadas() {
+const CATS: ("todos" | AssetCat)[] = ["todos", "residencial", "solares", "edificios", "singulares", "inversion"];
+
+function Activos() {
   const t = useT();
-  const items = t.properties.map((p, i) => ({ ...p, image: PROPERTY_IMAGES[i] }));
+  const lang = useContext(LangContext);
+  const a = ACT[lang];
+  const { setLead } = useContext(LeadContext);
+  const [cat, setCat] = useState<"todos" | AssetCat>("todos");
+  const [expanded, setExpanded] = useState(false);
+  const [search, setSearch] = useState("");
+  const list = cat === "todos" ? (expanded ? ASSETS : ASSETS.filter(x => x.featured)) : ASSETS.filter(x => x.cat === cat);
+  const count = (c: "todos" | AssetCat) => c === "todos" ? ASSETS.length : ASSETS.filter(x => x.cat === c).length;
+  const requestInfo = (id: AssetId) => { setLead({ operacion: "comprar", assetId: id }); scrollToId("contacto"); };
+  const submitSearch = () => { if (!search.trim()) return; setLead({ operacion: "comprar", busqueda: search.trim() }); scrollToId("contacto"); };
   return (
-    <section id="activos" style={{ padding: "clamp(110px, 14vw, 220px) 0", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
+    <section id="activos" style={{ padding: "clamp(110px, 13vw, 200px) 0 0", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
       <SectionTopLine />
-      <div style={{ padding: "0 6vw", maxWidth: 1600, margin: "0 auto" }}>
+      <div style={{ padding: "0 6vw", maxWidth: 1440, margin: "0 auto" }}>
         <FadeIn>
-          <div style={{ marginBottom: "clamp(50px, 6vw, 90px)" }}>
-            <Eyebrow>{t.activos.label}</Eyebrow>
-            <h2 style={{ fontFamily: HEADING, fontSize: "clamp(40px, 7vw, 120px)", fontWeight: 400, color: C.white, letterSpacing: "0.01em", lineHeight: 1, marginTop: 20 }}>
-              {t.activos.title}
-            </h2>
+          <div className="act-head act-head--stack">
+            <div>
+              <Eyebrow>{a.label}</Eyebrow>
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(40px, 6.6vw, 112px)", fontWeight: 400, color: C.white, letterSpacing: "0.005em", lineHeight: 1.02, marginTop: 24 }}>
+                {a.h1}<br /><span style={{ fontStyle: "italic", color: C.gold }}>{a.h2}</span>
+              </h2>
+            </div>
+            <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.3vw, 20px)", color: C.grey, lineHeight: 1.85, letterSpacing: "0.02em", maxWidth: 440 }}>
+              {a.lead}
+            </p>
           </div>
         </FadeIn>
-        <FadeIn delay={0.2}>
-          <DragCarousel items={items} prevLabel={t.activos.prev} nextLabel={t.activos.next} renderItem={(p) => <PropertyCard property={p} price={t.activos.price} />} />
+
+        <FadeIn delay={0.15}>
+          <div role="tablist" aria-label={a.label} className="act-filters">
+            {CATS.map(c => {
+              const active = cat === c;
+              return (
+                <button key={c} type="button" role="tab" aria-selected={active} onClick={() => { setCat(c); setExpanded(false); }}
+                  style={{
+                    fontFamily: UI, fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", whiteSpace: "nowrap",
+                    color: active ? C.white : C.greyDark, fontWeight: active ? 500 : 400,
+                    background: "transparent", border: "none", borderBottom: `1px solid ${active ? C.gold : "transparent"}`,
+                    padding: "14px 2px", cursor: "pointer", transition: "all 0.5s",
+                  }}>
+                  {a.filters[c]} <sup style={{ fontSize: 8, color: C.goldText, marginInlineStart: 3, letterSpacing: 0 }}>{count(c)}</sup>
+                </button>
+              );
+            })}
+          </div>
         </FadeIn>
-        <FadeIn delay={0.4}>
-          <p style={{ textAlign: "center", marginTop: 60, fontFamily: BODY, fontSize: 16, color: C.greyDark, letterSpacing: "0.04em", fontStyle: "italic", fontWeight: 400 }}>
-            {t.activos.note}
-          </p>
+
+        <motion.div layout className="act-grid">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {list.map((asset) => (
+              <motion.div key={asset.id} layout
+                initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.7, ease }}>
+                <AssetCard asset={asset} lang={lang} onInfo={() => requestInfo(asset.id)} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {cat === "todos" && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 56 }}>
+            <LiquidButton onClick={() => setExpanded(e => !e)}>
+              {expanded ? a.ver_menos : `${a.ver_todo} · ${ASSETS.length}`}
+            </LiquidButton>
+          </div>
+        )}
+        <p style={{ textAlign: "center", marginTop: 40, fontFamily: BODY, fontSize: 15, color: C.greyDark, letterSpacing: "0.03em", fontStyle: "italic", maxWidth: 620, marginInline: "auto" }}>
+          {a.note}
+        </p>
+      </div>
+
+      {/* Encargo de búsqueda */}
+      <div style={{ marginTop: "clamp(80px, 10vw, 140px)", background: "#0E0D0B", color: "#F5F2EB" }}>
+        <FadeIn>
+          <div className="encargo" style={{ maxWidth: 1440, margin: "0 auto", padding: "clamp(64px, 8vw, 110px) 6vw" }}>
+            <div>
+              <span style={{ fontFamily: UI, fontSize: 10, letterSpacing: "0.35em", color: C.gold, textTransform: "uppercase" }}>{t.tagline}</span>
+              <h3 style={{ fontFamily: HEADING, fontSize: "clamp(30px, 3.4vw, 50px)", fontWeight: 400, lineHeight: 1.12, marginTop: 22, color: "#F5F2EB" }}>
+                {a.encargo_h}<br /><span style={{ fontStyle: "italic", color: C.goldHover }}>{a.encargo_em}</span>
+              </h3>
+              <p style={{ fontFamily: BODY, fontSize: "clamp(16px, 1.2vw, 19px)", color: "rgba(245,242,235,0.66)", lineHeight: 1.85, marginTop: 22, maxWidth: 460 }}>{a.encargo_sub}</p>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }} style={{ display: "flex", flexDirection: "column", gap: 24, justifyContent: "center" }}>
+              <textarea aria-label={a.encargo_h} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={a.encargo_ph} rows={3} className="encargo-input"
+                style={{ width: "100%", resize: "none", background: "transparent", border: "none", borderBottom: "1px solid rgba(245,242,235,0.22)", color: "#F5F2EB", fontFamily: BODY, fontSize: "clamp(17px, 1.4vw, 21px)", lineHeight: 1.6, padding: "8px 0 14px", outline: "none" }} />
+              <div><LiquidButton type="submit" variant="solid">{a.encargo_btn}</LiquidButton></div>
+            </form>
+          </div>
         </FadeIn>
       </div>
     </section>
   );
 }
-function PropertyCard({ property, price }: { property: { image: string; tag: string; title: string; meta: string }; price: string }) {
+
+function AssetCard({ asset, lang, onInfo }: { asset: (typeof ASSETS)[number]; lang: Lang; onInfo: () => void }) {
+  const a = ACT[lang];
+  const x = a.assets[asset.id];
   const [hover, setHover] = useState(false);
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{ position: "relative", overflow: "hidden", borderRadius: 2, userSelect: "none" }}>
-      <div style={{ width: "100%", height: "clamp(340px, 42vw, 520px)", overflow: "hidden", background: C.blackBorder }}>
-        <img src={property.image} alt={property.title} draggable={false} loading="lazy"
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: hover ? "scale(1.05)" : "scale(1)", filter: hover ? "brightness(0.75)" : "brightness(0.85)", transition: "all 0.9s cubic-bezier(0.25,0.1,0.25,1)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(3,3,3,0.95) 0%, transparent 55%)" }} />
+    <article onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        height: "100%", display: "flex", flexDirection: "column", background: C.black,
+        border: `1px solid ${hover ? C.goldLine : C.blackBorder}`, borderRadius: 2, overflow: "hidden",
+        boxShadow: hover ? "0 24px 60px rgba(40,32,18,0.10)" : "0 0 0 rgba(0,0,0,0)",
+        transform: hover ? "translateY(-4px)" : "translateY(0)", transition: "all 0.7s cubic-bezier(0.25,0.1,0.25,1)",
+      }}>
+      <div style={{ position: "relative", aspectRatio: "3 / 2", overflow: "hidden", background: C.blackBorder }}>
+        <img src={asset.image} alt={`${x.type} — ${x.place}`} loading="lazy" width={960} height={640}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: hover ? "saturate(0.95) brightness(0.95)" : "saturate(0.78) brightness(0.9)", transform: hover ? "scale(1.04)" : "scale(1)", transition: "all 1.1s cubic-bezier(0.25,0.1,0.25,1)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(3,3,3,0.35) 0%, transparent 35%)" }} />
+        <span style={{ position: "absolute", top: 16, left: 16, fontFamily: UI, fontSize: 8, letterSpacing: "0.28em", textTransform: "uppercase", color: "#F5F2EB", background: "rgba(3,3,3,0.45)", backdropFilter: "blur(6px)", padding: "7px 11px", borderRadius: 2 }}>
+          {a.filters[asset.cat]}
+        </span>
+        <span style={{ position: "absolute", top: 16, right: 16, fontFamily: UI, fontSize: 8, letterSpacing: "0.2em", color: "rgba(245,242,235,0.85)", padding: "7px 0" }}>
+          {a.ref} {asset.ref}
+        </span>
       </div>
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px" }}>
-        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.gold, textTransform: "uppercase", marginBottom: 10 }}>{property.tag}</div>
-        <div style={{ fontFamily: HEADING, fontSize: "clamp(19px, 2vw, 24px)", fontWeight: 400, color: "#F5F2EB", letterSpacing: "0.01em", marginBottom: 8 }}>{property.title}</div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12, flexWrap: "wrap", borderTop: `1px solid ${hover ? C.goldLine : "rgba(255,255,255,0.1)"}`, paddingTop: 14, marginTop: 14, transition: "border-color 0.5s" }}>
-          <span style={{ fontFamily: BODY, fontSize: 15, color: C.whiteDim, fontWeight: 400, letterSpacing: "0.02em" }}>{property.meta}</span>
-          <span style={{ fontFamily: HEADING, fontSize: 17, color: C.gold, letterSpacing: "0.01em" }}>{price}</span>
+      <div style={{ padding: "26px 26px 22px", display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.goldText, textTransform: "uppercase" }}>{x.type}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+          <h3 style={{ fontFamily: HEADING, fontSize: "clamp(21px, 1.7vw, 25px)", fontWeight: 400, color: C.white, lineHeight: 1.2 }}>{x.place}</h3>
+          <span style={{ fontFamily: HEADING, fontSize: "clamp(21px, 1.7vw, 25px)", color: C.goldText, whiteSpace: "nowrap" }}>{formatPrice(asset.price, lang)}</span>
         </div>
+        <div style={{ height: 1, background: C.blackBorder, margin: "20px 0 18px" }} />
+        {x.kpis && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 18 }}>
+            {x.kpis.map(([k, v]) => (
+              <div key={k}>
+                <div style={{ fontFamily: HEADING, fontSize: 17, color: C.white, lineHeight: 1.2 }}>{v}</div>
+                <div style={{ fontFamily: UI, fontSize: 7.5, letterSpacing: "0.18em", color: C.greyDark, textTransform: "uppercase", marginTop: 6 }}>{k}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <ul style={{ listStyle: "none", fontFamily: BODY, fontSize: 16, color: C.grey, lineHeight: 1.5, flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+          {x.specs.map((s) => (
+            <li key={s} style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
+              <span aria-hidden="true" style={{ width: 10, height: 1, background: C.gold, flexShrink: 0, transform: "translateY(-4px)" }} />
+              {s}
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={onInfo}
+          style={{ marginTop: 22, paddingTop: 16, background: "none", borderWidth: "1px 0 0 0", borderStyle: "solid", borderColor: C.blackBorder, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: UI, fontSize: 9, letterSpacing: "0.26em", textTransform: "uppercase", color: hover ? C.goldText : C.greyDark, transition: "color 0.5s", textAlign: "start" }}>
+          {a.info}
+          <span style={{ transform: hover ? "translateX(4px)" : "translateX(0)", transition: "transform 0.6s", color: C.gold, fontSize: 14 }}>→</span>
+        </button>
       </div>
-    </div>
+    </article>
+  );
+}
+
+// ============================================
+// CON QUIÉN TRABAJAMOS
+// ============================================
+function Clientes() {
+  const lang = useContext(LangContext);
+  const c = ACT[lang].clientes;
+  const roman = ["i", "ii", "iii"];
+  return (
+    <section id="clientes" style={{ padding: "clamp(110px, 13vw, 200px) 6vw", background: C.blackDeep, position: "relative", overflow: "hidden" }}>
+      <SectionTopLine />
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+        <FadeIn>
+          <div className="act-head">
+            <div>
+              <Eyebrow>{c.label}</Eyebrow>
+              <GoldRule />
+              <h2 style={{ fontFamily: HEADING, fontSize: "clamp(36px, 4.6vw, 72px)", fontWeight: 400, color: C.white, lineHeight: 1.08, letterSpacing: "0.01em" }}>
+                {c.h} <span style={{ fontStyle: "italic", color: C.gold }}>{c.em}</span>.
+              </h2>
+            </div>
+            <p style={{ fontFamily: BODY, fontSize: "clamp(17px, 1.3vw, 20px)", color: C.grey, lineHeight: 1.85, maxWidth: 460, letterSpacing: "0.02em" }}>{c.lead}</p>
+          </div>
+        </FadeIn>
+
+        <motion.div className="prof-grid" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }} initial="hidden" whileInView="visible" viewport={VP}>
+          {c.perfiles.map((p, i) => (
+            <motion.div key={p.t} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.9, ease } } }}
+              style={{ borderTop: `1px solid ${C.blackBorder}`, paddingTop: 22 }}>
+              <div style={{ fontFamily: UI, fontSize: 9, letterSpacing: "0.3em", color: C.goldText }}>{String(i + 1).padStart(2, "0")}</div>
+              <div style={{ fontFamily: HEADING, fontSize: "clamp(21px, 1.7vw, 26px)", color: C.white, marginTop: 14, lineHeight: 1.2 }}>{p.t}</div>
+              <div style={{ fontFamily: BODY, fontSize: 17, color: C.grey, marginTop: 8, lineHeight: 1.6 }}>{p.d}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Escala de tickets */}
+        <FadeIn>
+          <div style={{ marginTop: "clamp(90px, 10vw, 150px)" }}>
+            <Eyebrow>{c.ticket_label}</Eyebrow>
+            <div className="ticket-scale">
+              <motion.div aria-hidden="true" className="ticket-line" initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={VP} transition={{ duration: 1.8, ease }}
+                style={{ transformOrigin: "left center" }} />
+              {TICKETS.map((v, i) => (
+                <div key={v} className="ticket-node">
+                  <div style={{ fontFamily: HEADING, fontSize: "clamp(20px, 2vw, 30px)", lineHeight: "40px", color: i === 0 ? C.goldText : C.white, whiteSpace: "nowrap" }}>
+                    {formatPrice(v, lang)}{i === TICKETS.length - 1 ? "+" : ""}
+                  </div>
+                  <span className="ticket-dot" />
+                  <div style={{ fontFamily: UI, fontSize: 8.5, letterSpacing: "0.22em", color: C.greyDark, textTransform: "uppercase" }}>{c.ticket_names[i]}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Situaciones */}
+        <FadeIn>
+          <div style={{ marginTop: "clamp(90px, 10vw, 150px)" }}>
+            <Eyebrow>{c.situ_label}</Eyebrow>
+            <div className="situ-grid">
+              {c.situaciones.map((s, i) => (
+                <div key={s} style={{ borderInlineStart: `1px solid ${C.goldLine}`, paddingInlineStart: 24 }}>
+                  <div style={{ fontFamily: HEADING, fontStyle: "italic", fontSize: 15, color: C.gold }}>{roman[i]}.</div>
+                  <p style={{ fontFamily: HEADING, fontSize: "clamp(19px, 1.55vw, 23px)", color: C.white, lineHeight: 1.45, marginTop: 10 }}>{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+
+        <FadeIn>
+          <div style={{ textAlign: "center", marginTop: "clamp(100px, 11vw, 170px)" }}>
+            <p style={{ fontFamily: HEADING, fontSize: "clamp(28px, 3.4vw, 50px)", color: C.white, lineHeight: 1.2 }}>
+              {c.cierre}<br /><span style={{ fontStyle: "italic", color: C.gold }}>{c.cierre_em}</span>
+            </p>
+            <div style={{ marginTop: 44 }}>
+              <LiquidButton href="#contacto">{c.cta}</LiquidButton>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
   );
 }
 
@@ -864,6 +988,12 @@ function Contacto({ lang }: { lang: Lang }) {
     if (lead.rango) leadParts.push(lead.rango);
     if (lead.ubicacion) leadParts.push(lead.ubicacion);
     if (lead.direccion) leadParts.push(lead.direccion);
+    if (lead.assetId) {
+      const x = ACT[lang].assets[lead.assetId];
+      const ref = ASSETS.find(a => a.id === lead.assetId)?.ref;
+      leadParts.push(`${x.type} — ${x.place} (${ACT[lang].ref} ${ref})`);
+    }
+    if (lead.busqueda) leadParts.push(`«${lead.busqueda}»`);
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -881,6 +1011,12 @@ function Contacto({ lang }: { lang: Lang }) {
       if (lead.rango) fd.append("rango_inversion", lead.rango);
       if (lead.ubicacion) fd.append("ubicacion", lead.ubicacion);
       if (lead.direccion) fd.append("direccion_activo", lead.direccion);
+      if (lead.assetId) {
+        const x = ACT.es.assets[lead.assetId];
+        const as = ASSETS.find(a => a.id === lead.assetId)!;
+        fd.append("activo_interes", `${as.ref} · ${x.type} — ${x.place} · ${formatPrice(as.price, "es")}`);
+      }
+      if (lead.busqueda) fd.append("encargo_busqueda", lead.busqueda);
     }
     fd.append("idioma_web", lang);
     fd.set("consentimiento", "Acepta la política de privacidad");
@@ -1095,6 +1231,7 @@ function Footer() {
           <motion.div variants={footerCol}>
             <div style={colTitle}>{t.footer.col_firma}</div>
             <FooterLink id="firma">{t.footer.firma_links.firma}</FooterLink>
+            <FooterLink id="clientes">{t.footer.firma_links.clientes}</FooterLink>
             <FooterLink id="faq">{t.footer.firma_links.faq}</FooterLink>
             <FooterLink id="vender">{t.footer.firma_links.vender}</FooterLink>
             <FooterLink id="contacto">{t.footer.firma_links.contacto}</FooterLink>
@@ -1198,7 +1335,8 @@ export default function JavierBoscoLanding() {
             <NavHeader lang={lang} setLang={setLang} />
             <main>
               <Hero />
-              <PropiedadesDestacadas />
+              <Activos />
+              <Clientes />
               <TiposActivo />
               <ExtraSection />
               <Destinos />

@@ -2,7 +2,7 @@
 
 ## CONTEXTO DE NEGOCIO
 
-Javier Bosco es broker inmobiliario off-market en Madrid. No aparece en portales. No busca clientes, los clientes le buscan a él. Opera en el rango de 1M€ a 200M€: solares estratégicos, edificios completos (como los del Viso), hoteles y cadenas hoteleras, residencial de lujo y activos singulares. También yates y aviación privada bajo cita. Discreción absoluta.
+Javier Bosco es broker inmobiliario off-market en Madrid. No aparece en portales. No busca clientes, los clientes le buscan a él. Opera desde 700.000 € hasta 200M€: solares estratégicos, edificios completos (como los del Viso), hoteles y cadenas hoteleras, residencial de lujo y activos singulares. También yates y aviación privada bajo cita. Discreción absoluta.
 
 Tagline: "Off-market. On-point."
 
@@ -24,7 +24,9 @@ La web NO vende. La web FILTRA. Solo los que entienden este mundo se sienten có
 La web está en **modo claro** (crema + oro apagado). La versión oscura "obsidiana" se descartó. No reconvertir a oscuro salvo que se pida explícitamente.
 
 ### Datos de negocio que se muestran
-- Rango de operaciones: **1M€ – 200M€** (único en toda la web: texto de La firma, FAQ y slider del buscador).
+- Rango de operaciones: **desde 700.000 € hasta 200 M€** (único en toda la web: La firma, FAQ, slider del buscador y escala de tickets).
+- Lema: **"Si alguien quiere algo, lo conseguimos."** Es el titular de la sección Activos.
+- Sección Activos = muestra ORIENTATIVA (`src/activos.ts`): nunca dirección exacta ni datos que identifiquen el activo o al propietario. Formato: tipo — zona · precio · características nicho (o KPIs: edificabilidad, WAULT, ocupación, yield…). Sustituir por activos reales cuando el cliente los facilite.
 - NO publicar cifras de track record (nº de operaciones, años, mayor operación) salvo que el cliente las confirme por escrito.
 - Email público: javierbosco@javierbosco.com (Zoho). El formulario envía a **javierboscointerno@gmail.com** vía FormSubmit (constantes en `src/legal.tsx`).
 
@@ -45,12 +47,12 @@ La web está en **modo claro** (crema + oro apagado). La versión oscura "obsidi
 
 ### Imágenes
 - Todas autoalojadas en `public/img/*.webp` (sin hotlinks a Unsplash). Cada foto de destino debe ser de ESA ciudad.
-- Destinos, tipologías y extra: fotos de Unsplash (licencia libre). Propiedades: fotos propias.
-- `prop-plazamayor.webp` viene de un original de 474px: sustituir por una foto de más resolución en cuanto la haya.
+- Destinos, tipologías, extra y activos orientativos (`act-*.webp`): fotos de Unsplash (licencia libre), elegidas para NO identificar ningún inmueble real.
 
 ### Estructura
-- `src/App.tsx`: todas las secciones (Hero, Activos, Tipologías, Extra yates/aviones, Destinos, La firma, Vender, Contacto, FAQ, Footer, modal legal).
+- `src/App.tsx`: todas las secciones (Hero, Activos orientativos + encargo de búsqueda, Con quién trabajamos, Tipologías, Extra yates/aviones, Destinos, La firma, Vender, Contacto, FAQ, Footer, modal legal).
 - `src/i18n.ts`: TODO el texto visible en 9 idiomas (es, en, fr, de, it, pt, ru, ar, zh). Nada de texto fijo en los componentes.
+- `src/activos.ts`: datos de los activos orientativos (precio, imagen, ref.) y sus textos + los de "Con quién trabajamos" en 9 idiomas.
 - `src/legal.tsx`: aviso legal, privacidad y cookies + datos del titular (`TITULAR`, rellenar NIF/domicilio).
 - `src/components/CardStack.tsx`: carrusel de destinos.
 - Despliegue: GitHub Pages sirviendo `/docs` (dominio javierbosco.com, `CNAME`). La Action reconstruye `docs/` en cada push a `main`.
